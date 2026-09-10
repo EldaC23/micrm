@@ -6,6 +6,8 @@
   <title>Mini CRM Interactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Librería para procesar archivos CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.min.js"></script>
   <style>
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -39,8 +41,14 @@
         </div>
       </div>
 
-      <!-- Action Buttons & Stats Header -->
-      <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-end flex-wrap">
+        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
+        
+        <button onclick="document.getElementById('csvFileInput').click()" class="bg-slate-700 hover:bg-slate-600 text-slate-100 font-medium px-3.5 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 border border-slate-600">
+          <i class="fa-solid fa-file-csv text-emerald-400"></i> Importar CSV/Excel
+        </button>
+
         <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-95">
           <i class="fa-solid fa-plus"></i> Nuevo Lead
         </button>
@@ -83,9 +91,7 @@
           </div>
           <span id="count-nuevo" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2.5 py-0.5 rounded-full">0</span>
         </div>
-        <div id="col-nuevo" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'nuevo')">
-          <!-- Cards populated by JS -->
-        </div>
+        <div id="col-nuevo" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'nuevo')"></div>
       </div>
 
       <!-- Column: Propuesta / Demo -->
@@ -97,9 +103,7 @@
           </div>
           <span id="count-propuesta" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2.5 py-0.5 rounded-full">0</span>
         </div>
-        <div id="col-propuesta" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'propuesta')">
-          <!-- Cards populated by JS -->
-        </div>
+        <div id="col-propuesta" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'propuesta')"></div>
       </div>
 
       <!-- Column: Negociación -->
@@ -111,9 +115,7 @@
           </div>
           <span id="count-negociacion" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2.5 py-0.5 rounded-full">0</span>
         </div>
-        <div id="col-negociacion" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'negociacion')">
-          <!-- Cards populated by JS -->
-        </div>
+        <div id="col-negociacion" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'negociacion')"></div>
       </div>
 
       <!-- Column: Ganado -->
@@ -125,9 +127,7 @@
           </div>
           <span id="count-ganado" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2.5 py-0.5 rounded-full">0</span>
         </div>
-        <div id="col-ganado" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'ganado')">
-          <!-- Cards populated by JS -->
-        </div>
+        <div id="col-ganado" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'ganado')"></div>
       </div>
 
     </div>
@@ -184,7 +184,6 @@
   </div>
 
   <script>
-    // Initial Mock Data
     let leads = JSON.parse(localStorage.getItem('crm_leads_data')) || [
       { id: '1', name: 'Centro Médico Vista', phone: '+584120001122', value: 450, stage: 'nuevo', notes: 'Consultó por demo de agenda médica digital' },
       { id: '2', name: 'Pizza Express', phone: '+584149998877', value: 200, stage: 'propuesta', notes: 'Se le envió propuesta de menú interactivo QR' },
@@ -192,25 +191,21 @@
       { id: '4', name: 'Boutique Besitos', phone: '+584125554433', value: 180, stage: 'ganado', notes: 'Pago inicial recibido. En etapa de diseño' }
     ];
 
-    // Render App on Load
     document.addEventListener('DOMContentLoaded', () => {
       renderBoard();
     });
 
-    // Save state to LocalStorage
     function saveData() {
       localStorage.setItem('crm_leads_data', JSON.stringify(leads));
       renderBoard();
     }
 
-    // Render Board and Metrics
     function renderBoard() {
       const stages = ['nuevo', 'propuesta', 'negociacion', 'ganado'];
       
-      // Clear columns
       stages.forEach(stage => {
         const col = document.getElementById(`col-${stage}`);
-        col.innerHTML = '';
+        if(col) col.innerHTML = '';
       });
 
       let totalVal = 0;
@@ -225,10 +220,10 @@
         if (col) col.appendChild(card);
       });
 
-      // Update Header Metrics
       stages.forEach(stage => {
         const count = leads.filter(l => l.stage === stage).length;
-        document.getElementById(`count-${stage}`).innerText = count;
+        const elem = document.getElementById(`count-${stage}`);
+        if(elem) elem.innerText = count;
       });
 
       document.getElementById('stat-total').innerText = leads.length;
@@ -239,15 +234,13 @@
       document.getElementById('stat-rate').innerText = `${rate}%`;
     }
 
-    // Create Card Component
     function createCardElement(lead) {
       const card = document.createElement('div');
       card.className = 'bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 rounded-xl p-3.5 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group relative';
       card.draggable = true;
       card.ondragstart = (e) => drag(e, lead.id);
 
-      // Clean phone number for WhatsApp URL
-      const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
+      const cleanPhone = String(lead.phone || '').replace(/[^0-9]/g, '');
       const waUrl = `https://wa.me/${cleanPhone}`;
 
       card.innerHTML = `
@@ -273,7 +266,6 @@
               <i class="fa-brands fa-whatsapp"></i> Chat
             </a>
             
-            <!-- Quick Move Dropdown -->
             <select onchange="moveLead('${lead.id}', this.value)" class="bg-slate-800 text-slate-300 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] focus:outline-none">
               <option value="nuevo" ${lead.stage === 'nuevo' ? 'selected' : ''}>Contacto</option>
               <option value="propuesta" ${lead.stage === 'propuesta' ? 'selected' : ''}>Demo</option>
@@ -287,15 +279,55 @@
       return card;
     }
 
-    // Drag and Drop Logic
-    function allowDrop(ev) {
-      ev.preventDefault();
+    // CSV Import Handler
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          let countAdded = 0;
+          
+          results.data.forEach(row => {
+            // Find key values with case tolerance
+            const name = row.Nombre || row.nombre || row.Empresa || row.empresa || row.Cliente || row.cliente;
+            const phone = row.Telefono || row.telefono || row.Celular || row.celular || row.WhatsApp || row.whatsapp || row.Phone;
+            const value = row.Valor || row.valor || row.Monto || row.monto || 0;
+            const notes = row.Notas || row.notas || row.Detalles || row.detalles || '';
+
+            if (name && phone) {
+              leads.push({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                name: String(name).trim(),
+                phone: String(phone).trim(),
+                value: Number(value) || 0,
+                stage: 'nuevo',
+                notes: String(notes).trim()
+              });
+              countAdded++;
+            }
+          });
+
+          if (countAdded > 0) {
+            saveData();
+            alert(`¡Se importaron con éxito ${countAdded} prospectos al CRM!`);
+          } else {
+            alert('No se encontraron filas válidas. Revisa que tu archivo tenga columnas con nombres como "Nombre" y "Telefono".');
+          }
+          
+          // Clear input file
+          event.target.value = '';
+        },
+        error: function(err) {
+          alert('Hubo un error al leer el archivo CSV.');
+        }
+      });
     }
 
-    function drag(ev, id) {
-      ev.dataTransfer.setData("text/plain", id);
-    }
-
+    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev, id) { ev.dataTransfer.setData("text/plain", id); }
     function drop(ev, newStage) {
       ev.preventDefault();
       const id = ev.dataTransfer.getData("text/plain");
@@ -307,7 +339,6 @@
       saveData();
     }
 
-    // Modal Actions
     function openModal() {
       document.getElementById('leadForm').reset();
       document.getElementById('leadId').value = '';
@@ -344,19 +375,16 @@
       const notes = document.getElementById('leadNotes').value;
 
       if (id) {
-        // Edit existing
         leads = leads.map(l => l.id === id ? { ...l, name, phone, value, stage, notes } : l);
       } else {
-        // Create new
-        const newLead = {
+        leads.push({
           id: Date.now().toString(),
           name,
           phone,
           value,
           stage,
           notes
-        };
-        leads.push(newLead);
+        });
       }
 
       saveData();
@@ -370,17 +398,13 @@
       }
     }
 
-    // Helper: Prevent XSS
     function escapeHtml(text) {
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return text.replace(/[&<>"']/g, m => map[m]);
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(text || '').replace(/[&<>"']/g, m => map[m]);
     }
+  </script>
+</body>
+</html>
   </script>
 </body>
 </html>
