@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini CRM Interactivo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Header / Navbar -->
+  <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-chart-kanban text-white text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-white tracking-wide">CRM Prospectos</h1>
+          <p class="text-xs text-slate-400">Gestor de Embudos & Contactos</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons & Stats Header -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-95">
+          <i class="fa-solid fa-plus"></i> Nuevo Lead
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Metrics Dashboard Bar -->
+  <section class="bg-slate-800/50 border-b border-slate-700/60 py-3 px-4">
+    <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 text-center sm:text-left">
+      <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700/80">
+        <p class="text-xs text-slate-400 font-medium">Total Prospectos</p>
+        <p id="stat-total" class="text-lg font-bold text-slate-100">0</p>
+      </div>
+      <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700/80">
+        <p class="text-xs text-slate-400 font-medium">Valor en Pipeline</p>
+        <p id="stat-value" class="text-lg font-bold text-emerald-400">$0</p>
+      </div>
+      <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700/80">
+        <p class="text-xs text-slate-400 font-medium">Cierres Ganados</p>
+        <p id="stat-won" class="text-lg font-bold text-indigo-400">0</p>
+      </div>
+      <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700/80">
+        <p class="text-xs text-slate-400 font-medium">Tasa Conversión</p>
+        <p id="stat-rate" class="text-lg font-bold text-amber-400">0%</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content: Kanban Board -->
+  <main class="flex-1 p-4 md:p-6 overflow-x-auto custom-scrollbar max-w-7xl mx-auto w-full">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 min-w-[800px] h-full items-start">
+
+      <!-- Column: Contacto Inicial -->
+      <div class="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <h2 class="font-semibold text-sm text-slate-200">Contacto Inicial</h2>
+          </div>
+          <span id="count-nuevo" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2.5 py-0.5 rounded-full">0</span>
+        </div>
+        <div id="col-nuevo" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'nuevo')">
+          <!-- Cards populated by JS -->
+        </div>
+      </div>
+
+      <!-- Column: Propuesta / Demo -->
+      <div class="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+            <h2 class="font-semibold text-sm text-slate-200">Propuesta / Demo</h2>
+          </div>
+          <span id="count-propuesta" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2.5 py-0.5 rounded-full">0</span>
+        </div>
+        <div id="col-propuesta" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'propuesta')">
+          <!-- Cards populated by JS -->
+        </div>
+      </div>
+
+      <!-- Column: Negociación -->
+      <div class="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+            <h2 class="font-semibold text-sm text-slate-200">Negociación</h2>
+          </div>
+          <span id="count-negociacion" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2.5 py-0.5 rounded-full">0</span>
+        </div>
+        <div id="col-negociacion" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'negociacion')">
+          <!-- Cards populated by JS -->
+        </div>
+      </div>
+
+      <!-- Column: Ganado -->
+      <div class="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <h2 class="font-semibold text-sm text-slate-200">Cierre / Ganado</h2>
+          </div>
+          <span id="count-ganado" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2.5 py-0.5 rounded-full">0</span>
+        </div>
+        <div id="col-ganado" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'ganado')">
+          <!-- Cards populated by JS -->
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal: Crear / Editar Lead -->
+  <div id="leadModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl p-6 relative">
+      <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 id="modalTitle" class="text-lg font-bold text-white mb-4">Agregar Nuevo Prospecto</h3>
+      
+      <form id="leadForm" onsubmit="saveLead(event)" class="space-y-4">
+        <input type="hidden" id="leadId">
+        
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Nombre o Empresa *</label>
+          <input type="text" id="leadName" required placeholder="Ej: Clínica Dental San José" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Teléfono / WhatsApp *</label>
+          <input type="text" id="leadPhone" required placeholder="Ej: +584121234567" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Valor Est. ($)</label>
+            <input type="number" id="leadValue" min="0" placeholder="Ej: 350" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Etapa Inicial</label>
+            <select id="leadStage" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+              <option value="nuevo">Contacto Inicial</option>
+              <option value="propuesta">Propuesta / Demo</option>
+              <option value="negociacion">Negociación</option>
+              <option value="ganado">Cierre / Ganado</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Notas / Detalles</label>
+          <textarea id="leadNotes" rows="2" placeholder="Ej: Interesado en landing page y menú interactivo" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-lg">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg shadow-md">Guardar Prospecto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Initial Mock Data
+    let leads = JSON.parse(localStorage.getItem('crm_leads_data')) || [
+      { id: '1', name: 'Centro Médico Vista', phone: '+584120001122', value: 450, stage: 'nuevo', notes: 'Consultó por demo de agenda médica digital' },
+      { id: '2', name: 'Pizza Express', phone: '+584149998877', value: 200, stage: 'propuesta', notes: 'Se le envió propuesta de menú interactivo QR' },
+      { id: '3', name: 'Dra. María Ramos', phone: '+584241112233', value: 350, stage: 'negociacion', notes: 'Revisando alcance de landing page ginecológica' },
+      { id: '4', name: 'Boutique Besitos', phone: '+584125554433', value: 180, stage: 'ganado', notes: 'Pago inicial recibido. En etapa de diseño' }
+    ];
+
+    // Render App on Load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderBoard();
+    });
+
+    // Save state to LocalStorage
+    function saveData() {
+      localStorage.setItem('crm_leads_data', JSON.stringify(leads));
+      renderBoard();
+    }
+
+    // Render Board and Metrics
+    function renderBoard() {
+      const stages = ['nuevo', 'propuesta', 'negociacion', 'ganado'];
+      
+      // Clear columns
+      stages.forEach(stage => {
+        const col = document.getElementById(`col-${stage}`);
+        col.innerHTML = '';
+      });
+
+      let totalVal = 0;
+      let countWon = 0;
+
+      leads.forEach(lead => {
+        totalVal += Number(lead.value || 0);
+        if (lead.stage === 'ganado') countWon++;
+
+        const card = createCardElement(lead);
+        const col = document.getElementById(`col-${lead.stage}`);
+        if (col) col.appendChild(card);
+      });
+
+      // Update Header Metrics
+      stages.forEach(stage => {
+        const count = leads.filter(l => l.stage === stage).length;
+        document.getElementById(`count-${stage}`).innerText = count;
+      });
+
+      document.getElementById('stat-total').innerText = leads.length;
+      document.getElementById('stat-value').innerText = `$${totalVal.toLocaleString()}`;
+      document.getElementById('stat-won').innerText = countWon;
+      
+      const rate = leads.length > 0 ? Math.round((countWon / leads.length) * 100) : 0;
+      document.getElementById('stat-rate').innerText = `${rate}%`;
+    }
+
+    // Create Card Component
+    function createCardElement(lead) {
+      const card = document.createElement('div');
+      card.className = 'bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 rounded-xl p-3.5 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group relative';
+      card.draggable = true;
+      card.ondragstart = (e) => drag(e, lead.id);
+
+      // Clean phone number for WhatsApp URL
+      const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
+      const waUrl = `https://wa.me/${cleanPhone}`;
+
+      card.innerHTML = `
+        <div class="flex justify-between items-start mb-2">
+          <h4 class="font-semibold text-sm text-slate-100 group-hover:text-indigo-400 transition-colors leading-snug">${escapeHtml(lead.name)}</h4>
+          <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100">
+            <button onclick="editLead('${lead.id}')" class="text-xs text-slate-400 hover:text-slate-200 p-1" title="Editar">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="deleteLead('${lead.id}')" class="text-xs text-slate-400 hover:text-red-400 p-1" title="Eliminar">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+        
+        ${lead.notes ? `<p class="text-xs text-slate-400 mb-3 line-clamp-2">${escapeHtml(lead.notes)}</p>` : ''}
+        
+        <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+          <span class="font-bold text-emerald-400">$${Number(lead.value || 0).toLocaleString()}</span>
+          
+          <div class="flex items-center gap-2">
+            <a href="${waUrl}" target="_blank" class="inline-flex items-center gap-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 px-2 py-1 rounded border border-emerald-500/30 font-medium transition-colors">
+              <i class="fa-brands fa-whatsapp"></i> Chat
+            </a>
+            
+            <!-- Quick Move Dropdown -->
+            <select onchange="moveLead('${lead.id}', this.value)" class="bg-slate-800 text-slate-300 border border-slate-700 rounded px-1.5 py-0.5 text-[11px] focus:outline-none">
+              <option value="nuevo" ${lead.stage === 'nuevo' ? 'selected' : ''}>Contacto</option>
+              <option value="propuesta" ${lead.stage === 'propuesta' ? 'selected' : ''}>Demo</option>
+              <option value="negociacion" ${lead.stage === 'negociacion' ? 'selected' : ''}>Negociación</option>
+              <option value="ganado" ${lead.stage === 'ganado' ? 'selected' : ''}>Ganado</option>
+            </select>
+          </div>
+        </div>
+      `;
+
+      return card;
+    }
+
+    // Drag and Drop Logic
+    function allowDrop(ev) {
+      ev.preventDefault();
+    }
+
+    function drag(ev, id) {
+      ev.dataTransfer.setData("text/plain", id);
+    }
+
+    function drop(ev, newStage) {
+      ev.preventDefault();
+      const id = ev.dataTransfer.getData("text/plain");
+      moveLead(id, newStage);
+    }
+
+    function moveLead(id, newStage) {
+      leads = leads.map(l => l.id === id ? { ...l, stage: newStage } : l);
+      saveData();
+    }
+
+    // Modal Actions
+    function openModal() {
+      document.getElementById('leadForm').reset();
+      document.getElementById('leadId').value = '';
+      document.getElementById('modalTitle').innerText = 'Agregar Nuevo Prospecto';
+      document.getElementById('leadModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('leadModal').classList.add('hidden');
+    }
+
+    function editLead(id) {
+      const lead = leads.find(l => l.id === id);
+      if (!lead) return;
+
+      document.getElementById('leadId').value = lead.id;
+      document.getElementById('leadName').value = lead.name;
+      document.getElementById('leadPhone').value = lead.phone;
+      document.getElementById('leadValue').value = lead.value;
+      document.getElementById('leadStage').value = lead.stage;
+      document.getElementById('leadNotes').value = lead.notes || '';
+
+      document.getElementById('modalTitle').innerText = 'Editar Prospecto';
+      document.getElementById('leadModal').classList.remove('hidden');
+    }
+
+    function saveLead(e) {
+      e.preventDefault();
+      const id = document.getElementById('leadId').value;
+      const name = document.getElementById('leadName').value;
+      const phone = document.getElementById('leadPhone').value;
+      const value = document.getElementById('leadValue').value;
+      const stage = document.getElementById('leadStage').value;
+      const notes = document.getElementById('leadNotes').value;
+
+      if (id) {
+        // Edit existing
+        leads = leads.map(l => l.id === id ? { ...l, name, phone, value, stage, notes } : l);
+      } else {
+        // Create new
+        const newLead = {
+          id: Date.now().toString(),
+          name,
+          phone,
+          value,
+          stage,
+          notes
+        };
+        leads.push(newLead);
+      }
+
+      saveData();
+      closeModal();
+    }
+
+    function deleteLead(id) {
+      if (confirm('¿Estás seguro de que deseas eliminar este prospecto?')) {
+        leads = leads.filter(l => l.id !== id);
+        saveData();
+      }
+    }
+
+    // Helper: Prevent XSS
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+  </script>
+</body>
+</html>
