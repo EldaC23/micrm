@@ -68,7 +68,7 @@
         <!-- Live Search Bar -->
         <div class="relative w-full sm:w-64">
           <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-          <input type="text" id="searchInput" oninput="renderBoard()" placeholder="Buscar prospecto, teléfono..." class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-fuchsia-300 rounded-2xl pl-9 pr-8 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-inner">
+          <input type="text" id="searchInput" oninput="renderBoard()" placeholder="Buscar prospecto, teléfono, instagram..." class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-fuchsia-300 rounded-2xl pl-9 pr-8 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-inner">
           <button onclick="clearSearch()" id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs hidden">
             <i class="fa-solid fa-circle-xmark"></i>
           </button>
@@ -218,9 +218,15 @@
           <input type="text" id="leadName" required placeholder="Ej: Pizzería Gran Plaza" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono / WhatsApp *</label>
-          <input type="text" id="leadPhone" required placeholder="Ej: +584121234567" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono / WhatsApp *</label>
+            <input type="text" id="leadPhone" required placeholder="Ej: +584121234567" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Instagram / Redes</label>
+            <input type="text" id="leadInstagram" placeholder="Ej: @pizzeriagranplaza" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -302,17 +308,15 @@
       let countWon = 0;
       let totalFilteredLeads = 0;
 
-      // El render conserva el orden exacto del array (FIFO: los primeros arriba)
       leads.forEach(lead => {
-        // Filtro por Categoría
         const matchesCategory = (selectedCategory === 'ALL') || (lead.category === selectedCategory);
 
-        // Filtro de Búsqueda por texto
         const matchName = String(lead.name || '').toLowerCase().includes(searchTerm);
         const matchPhone = String(lead.phone || '').toLowerCase().includes(searchTerm);
+        const matchInsta = String(lead.instagram || '').toLowerCase().includes(searchTerm);
         const matchCat = String(lead.category || '').toLowerCase().includes(searchTerm);
         const matchNotes = String(lead.notes || '').toLowerCase().includes(searchTerm);
-        const matchesSearch = (searchTerm === '' || matchName || matchPhone || matchCat || matchNotes);
+        const matchesSearch = (searchTerm === '' || matchName || matchPhone || matchInsta || matchCat || matchNotes);
 
         if (matchesCategory && matchesSearch) {
           totalFilteredLeads++;
@@ -325,13 +329,13 @@
         }
       });
 
-      // Actualizar contadores por columna para la vista filtrada
       stages.forEach(stage => {
         const count = leads.filter(l => {
           const catOk = (selectedCategory === 'ALL') || (l.category === selectedCategory);
           const searchOk = searchTerm === '' || 
             String(l.name || '').toLowerCase().includes(searchTerm) ||
             String(l.phone || '').toLowerCase().includes(searchTerm) ||
+            String(l.instagram || '').toLowerCase().includes(searchTerm) ||
             String(l.category || '').toLowerCase().includes(searchTerm) ||
             String(l.notes || '').toLowerCase().includes(searchTerm);
           return l.stage === stage && catOk && searchOk;
@@ -358,7 +362,6 @@
     function createCardElement(lead) {
       const card = document.createElement('div');
       
-      // Tarjeta FUCSIA para "Por Contactar" y Bento Styles para las demás etapas
       let bentoStyles = {
         bg: "bg-gradient-to-tr from-fuchsia-600 via-pink-500 to-rose-500 text-white border-0 shadow-sm",
         iconBg: "bg-white/20 text-white",
@@ -414,7 +417,6 @@
       const waUrl = `https://wa.me/${cleanPhone}`;
       const category = lead.category || 'General';
 
-      // Iconos según la categoría
       let catIcon = "fa-tag";
       if (category === 'Salud') catIcon = "fa-user-doctor";
       if (category === 'Gastronomía' || category === 'Comidas') catIcon = "fa-utensils";
@@ -422,8 +424,12 @@
       if (category === 'Comercio') catIcon = "fa-bag-shopping";
       if (category === 'Servicios') catIcon = "fa-briefcase";
 
+      const rawInsta = (lead.instagram || '').trim();
+      const cleanInsta = rawInsta.startsWith('@') ? rawInsta : (rawInsta ? `@${rawInsta}` : '');
+      const instaUrl = cleanInsta ? `https://instagram.com/${cleanInsta.replace('@', '')}` : '';
+
       card.innerHTML = `
-        <div class="flex items-center justify-between gap-2 mb-2.5">
+        <div class="flex items-center justify-between gap-2 mb-2">
           <div class="w-8 h-8 rounded-xl ${bentoStyles.iconBg} flex items-center justify-center">
             <i class="fa-solid ${catIcon} text-xs"></i>
           </div>
@@ -438,11 +444,17 @@
           </div>
         </div>
 
-        <div class="mb-2.5">
+        <div class="mb-2">
           <span class="inline-block text-[9px] font-bold uppercase tracking-wider ${bentoStyles.tagBg} border px-2 py-0.5 rounded-full mb-1">
             ${escapeHtml(category)}
           </span>
           <h4 class="font-extrabold text-sm leading-tight tracking-tight">${escapeHtml(lead.name)}</h4>
+          
+          ${cleanInsta ? `
+            <a href="${instaUrl}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold mt-1.5 px-2 py-0.5 rounded-lg ${bentoStyles.tagBg} border hover:opacity-90 transition-opacity">
+              <i class="fa-brands fa-instagram text-xs"></i> ${escapeHtml(cleanInsta)}
+            </a>
+          ` : ''}
         </div>
         
         ${lead.notes ? `<p class="text-[11px] ${bentoStyles.descColor} font-medium mb-2.5 line-clamp-2 leading-relaxed">${escapeHtml(lead.notes)}</p>` : ''}
@@ -469,7 +481,6 @@
       return card;
     }
 
-    // Auto mover a Contacto Inicial al hacer clic en Chat si estaba en Por Contactar
     function autoMoveToContacted(id) {
       const lead = leads.find(l => l.id === id);
       if (lead && lead.stage === 'sin_contactar') {
@@ -478,7 +489,6 @@
       }
     }
 
-    // CSV Import Handler (Conserva el orden original)
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -492,6 +502,7 @@
           results.data.forEach(row => {
             const name = row.Nombre || row.nombre || row.Empresa || row.empresa || row.Cliente || row.cliente;
             const phone = row.WhatsApp || row.whatsapp || row.Telefono || row.telefono || row.Celular || row.celular || row.Phone;
+            const instagram = row.Instagram || row.instagram || row.Insta || row.insta || row.Redes || row.redes || '';
             const value = row.Valor || row.valor || row.Monto || row.monto || 0;
             const category = row.Categoria || row.categoria || row.Nicho || row.nicho || 'Gastronomía';
             const notes = row.Observaciones || row.observaciones || row.Notas || row.notas || row.Detalles || row.detalles || '';
@@ -501,6 +512,7 @@
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                 name: String(name).trim(),
                 phone: String(phone).trim(),
+                instagram: String(instagram).trim(),
                 value: Number(value) || 0,
                 category: String(category).trim(),
                 stage: 'sin_contactar',
@@ -556,6 +568,7 @@
       document.getElementById('leadId').value = lead.id;
       document.getElementById('leadName').value = lead.name;
       document.getElementById('leadPhone').value = lead.phone;
+      document.getElementById('leadInstagram').value = lead.instagram || '';
       document.getElementById('leadValue').value = lead.value;
       document.getElementById('leadCategory').value = lead.category || 'Gastronomía';
       document.getElementById('leadStage').value = lead.stage;
@@ -570,18 +583,20 @@
       const id = document.getElementById('leadId').value;
       const name = document.getElementById('leadName').value;
       const phone = document.getElementById('leadPhone').value;
+      const instagram = document.getElementById('leadInstagram').value;
       const value = document.getElementById('leadValue').value;
       const category = document.getElementById('leadCategory').value;
       const stage = document.getElementById('leadStage').value;
       const notes = document.getElementById('leadNotes').value;
 
       if (id) {
-        leads = leads.map(l => l.id === id ? { ...l, name, phone, value, category, stage, notes } : l);
+        leads = leads.map(l => l.id === id ? { ...l, name, phone, instagram, value, category, stage, notes } : l);
       } else {
         leads.push({
           id: Date.now().toString(),
           name,
           phone,
+          instagram,
           value,
           category,
           stage,
