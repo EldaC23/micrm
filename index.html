@@ -37,7 +37,7 @@
       <!-- Brand Logo & Title -->
       <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
         <div class="flex items-center space-x-3">
-          <div class="bg-gradient-to-tr from-violet-500 to-fuchsia-500 p-3 rounded-2xl shadow-md text-white">
+          <div class="bg-gradient-to-tr from-fuchsia-500 to-indigo-500 p-3 rounded-2xl shadow-md text-white">
             <i class="fa-solid fa-chart-kanban text-lg"></i>
           </div>
           <div>
@@ -47,13 +47,32 @@
         </div>
       </div>
 
-      <!-- Live Search Bar -->
-      <div class="relative w-full sm:w-72">
-        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-        <input type="text" id="searchInput" oninput="renderBoard()" placeholder="Buscar prospecto, teléfono, nicho..." class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-indigo-300 rounded-2xl pl-9 pr-8 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-inner">
-        <button onclick="clearSearch()" id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs hidden">
-          <i class="fa-solid fa-circle-xmark"></i>
-        </button>
+      <!-- Live Search & Category Filter Bar -->
+      <div class="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto flex-1 max-w-xl justify-center">
+        <!-- Filter by Category -->
+        <div class="relative w-full sm:w-48">
+          <i class="fa-solid fa-filter absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <select id="categoryFilter" onchange="renderBoard()" class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-fuchsia-300 rounded-2xl pl-9 pr-3 py-2 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-inner cursor-pointer appearance-none">
+            <option value="ALL">Todas las Categorías</option>
+            <option value="Gastronomía">🍕 Gastronomía / Menús</option>
+            <option value="Salud">🩺 Salud / Médico</option>
+            <option value="Entretenimiento">🎭 Entretenimiento</option>
+            <option value="Comercio">🛍️ Comercio / Tienda</option>
+            <option value="Servicios">💼 Servicios Prof.</option>
+            <option value="Comidas">🍔 Comidas Rápida</option>
+            <option value="General">📌 General</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+        </div>
+
+        <!-- Live Search Bar -->
+        <div class="relative w-full sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="searchInput" oninput="renderBoard()" placeholder="Buscar prospecto, teléfono..." class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-fuchsia-300 rounded-2xl pl-9 pr-8 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-inner">
+          <button onclick="clearSearch()" id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs hidden">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Action Buttons -->
@@ -76,10 +95,10 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
         <div>
-          <p class="text-xs text-slate-400 font-semibold">Total Leads</p>
+          <p class="text-xs text-slate-400 font-semibold">Leads (Filtrados)</p>
           <p id="stat-total" class="text-xl font-extrabold text-slate-800 mt-0.5">0</p>
         </div>
-        <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center font-bold">
+        <div class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-fuchsia-500 flex items-center justify-center font-bold">
           <i class="fa-solid fa-users text-sm"></i>
         </div>
       </div>
@@ -97,9 +116,9 @@
       <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
         <div>
           <p class="text-xs text-slate-400 font-semibold">Ganados</p>
-          <p id="stat-won" class="text-xl font-extrabold text-fuchsia-600 mt-0.5">0</p>
+          <p id="stat-won" class="text-xl font-extrabold text-indigo-600 mt-0.5">0</p>
         </div>
-        <div class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-fuchsia-500 flex items-center justify-center font-bold">
+        <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center font-bold">
           <i class="fa-solid fa-trophy text-sm"></i>
         </div>
       </div>
@@ -124,7 +143,7 @@
       <div class="bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
         <div class="flex items-center justify-between px-2 py-2 mb-2">
           <div class="flex items-center gap-2">
-            <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-fuchsia-500"></div>
             <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Por Contactar</h2>
           </div>
           <span id="count-sin_contactar" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
@@ -196,20 +215,21 @@
         
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre o Empresa *</label>
-          <input type="text" id="leadName" required placeholder="Ej: Clínica Dental San José" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+          <input type="text" id="leadName" required placeholder="Ej: Pizzería Gran Plaza" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono / WhatsApp *</label>
-          <input type="text" id="leadPhone" required placeholder="Ej: +584121234567" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+          <input type="text" id="leadPhone" required placeholder="Ej: +584121234567" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Categoría / Nicho</label>
-            <select id="leadCategory" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            <select id="leadCategory" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+              <option value="Gastronomía">🍕 Gastronomía / Menús</option>
               <option value="Salud">🩺 Salud / Médico</option>
-              <option value="Gastronomía">🍕 Gastronomía</option>
+              <option value="Entretenimiento">🎭 Entretenimiento</option>
               <option value="Comercio">🛍️ Comercio / Tienda</option>
               <option value="Servicios">💼 Servicios Prof.</option>
               <option value="Comidas">🍔 Comidas Rápida</option>
@@ -218,13 +238,13 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Est. ($)</label>
-            <input type="number" id="leadValue" min="0" placeholder="Ej: 350" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            <input type="number" id="leadValue" min="0" placeholder="Ej: 350" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Etapa Inicial</label>
-          <select id="leadStage" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+          <select id="leadStage" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
             <option value="sin_contactar">Por Contactar</option>
             <option value="nuevo">Contacto Inicial</option>
             <option value="propuesta">Propuesta / Demo</option>
@@ -235,7 +255,7 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Notas / Detalles</label>
-          <textarea id="leadNotes" rows="2" placeholder="Ej: Interesado en landing page y menú interactivo" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
+          <textarea id="leadNotes" rows="2" placeholder="Ej: Interesado en menú interactivo con código QR" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400"></textarea>
         </div>
 
         <div class="flex justify-end gap-3 pt-2">
@@ -263,6 +283,9 @@
       const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
       const clearBtn = document.getElementById('clearSearchBtn');
 
+      const categoryFilter = document.getElementById('categoryFilter');
+      const selectedCategory = categoryFilter ? categoryFilter.value : 'ALL';
+
       if (clearBtn) {
         if (searchTerm.length > 0) clearBtn.classList.remove('hidden');
         else clearBtn.classList.add('hidden');
@@ -277,36 +300,52 @@
 
       let totalVal = 0;
       let countWon = 0;
+      let totalFilteredLeads = 0;
 
-      // El render conserva el orden exacto del array (FIFO: los primeros del Excel arriba)
+      // El render conserva el orden exacto del array (FIFO: los primeros arriba)
       leads.forEach(lead => {
-        totalVal += Number(lead.value || 0);
-        if (lead.stage === 'ganado') countWon++;
+        // Filtro por Categoría
+        const matchesCategory = (selectedCategory === 'ALL') || (lead.category === selectedCategory);
 
-        // Filtro de Búsqueda
+        // Filtro de Búsqueda por texto
         const matchName = String(lead.name || '').toLowerCase().includes(searchTerm);
         const matchPhone = String(lead.phone || '').toLowerCase().includes(searchTerm);
         const matchCat = String(lead.category || '').toLowerCase().includes(searchTerm);
         const matchNotes = String(lead.notes || '').toLowerCase().includes(searchTerm);
+        const matchesSearch = (searchTerm === '' || matchName || matchPhone || matchCat || matchNotes);
 
-        if (searchTerm === '' || matchName || matchPhone || matchCat || matchNotes) {
+        if (matchesCategory && matchesSearch) {
+          totalFilteredLeads++;
+          totalVal += Number(lead.value || 0);
+          if (lead.stage === 'ganado') countWon++;
+
           const card = createCardElement(lead);
           const col = document.getElementById(`col-${lead.stage}`);
           if (col) col.appendChild(card);
         }
       });
 
+      // Actualizar contadores por columna para la vista filtrada
       stages.forEach(stage => {
-        const count = leads.filter(l => l.stage === stage).length;
+        const count = leads.filter(l => {
+          const catOk = (selectedCategory === 'ALL') || (l.category === selectedCategory);
+          const searchOk = searchTerm === '' || 
+            String(l.name || '').toLowerCase().includes(searchTerm) ||
+            String(l.phone || '').toLowerCase().includes(searchTerm) ||
+            String(l.category || '').toLowerCase().includes(searchTerm) ||
+            String(l.notes || '').toLowerCase().includes(searchTerm);
+          return l.stage === stage && catOk && searchOk;
+        }).length;
+
         const elem = document.getElementById(`count-${stage}`);
         if(elem) elem.innerText = count;
       });
 
-      document.getElementById('stat-total').innerText = leads.length;
+      document.getElementById('stat-total').innerText = totalFilteredLeads;
       document.getElementById('stat-value').innerText = `$${totalVal.toLocaleString()}`;
       document.getElementById('stat-won').innerText = countWon;
       
-      const rate = leads.length > 0 ? Math.round((countWon / leads.length) * 100) : 0;
+      const rate = totalFilteredLeads > 0 ? Math.round((countWon / totalFilteredLeads) * 100) : 0;
       document.getElementById('stat-rate').innerText = `${rate}%`;
     }
 
@@ -319,14 +358,14 @@
     function createCardElement(lead) {
       const card = document.createElement('div');
       
-      // Bento Styles por Etapa (Incluye estilo destacado Amarillo para Por Contactar)
+      // Tarjeta FUCSIA para "Por Contactar" y Bento Styles para las demás etapas
       let bentoStyles = {
-        bg: "bg-[#FEF9C3] text-amber-950 border border-amber-300/80 shadow-sm",
-        iconBg: "bg-amber-300/50 text-amber-900",
-        tagBg: "bg-amber-200/80 text-amber-900 border-amber-300",
-        priceColor: "text-amber-950 font-extrabold",
-        descColor: "text-amber-900/80",
-        btnBg: "bg-amber-200/80 hover:bg-amber-300 text-amber-950 border-amber-300"
+        bg: "bg-gradient-to-tr from-fuchsia-600 via-pink-500 to-rose-500 text-white border-0 shadow-sm",
+        iconBg: "bg-white/20 text-white",
+        tagBg: "bg-white/20 text-white border-white/30",
+        priceColor: "text-white font-extrabold",
+        descColor: "text-white/90",
+        btnBg: "bg-white/20 hover:bg-white/30 text-white border-white/30"
       };
 
       if (lead.stage === 'nuevo') {
@@ -379,6 +418,7 @@
       let catIcon = "fa-tag";
       if (category === 'Salud') catIcon = "fa-user-doctor";
       if (category === 'Gastronomía' || category === 'Comidas') catIcon = "fa-utensils";
+      if (category === 'Entretenimiento') catIcon = "fa-masks-theater";
       if (category === 'Comercio') catIcon = "fa-bag-shopping";
       if (category === 'Servicios') catIcon = "fa-briefcase";
 
@@ -438,7 +478,7 @@
       }
     }
 
-    // CSV Import Handler (Conserva el orden del Excel de arriba a abajo)
+    // CSV Import Handler (Conserva el orden original)
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -453,7 +493,7 @@
             const name = row.Nombre || row.nombre || row.Empresa || row.empresa || row.Cliente || row.cliente;
             const phone = row.WhatsApp || row.whatsapp || row.Telefono || row.telefono || row.Celular || row.celular || row.Phone;
             const value = row.Valor || row.valor || row.Monto || row.monto || 0;
-            const category = row.Categoria || row.categoria || row.Nicho || row.nicho || 'General';
+            const category = row.Categoria || row.categoria || row.Nicho || row.nicho || 'Gastronomía';
             const notes = row.Observaciones || row.observaciones || row.Notas || row.notas || row.Detalles || row.detalles || '';
 
             if (name && phone) {
@@ -517,7 +557,7 @@
       document.getElementById('leadName').value = lead.name;
       document.getElementById('leadPhone').value = lead.phone;
       document.getElementById('leadValue').value = lead.value;
-      document.getElementById('leadCategory').value = lead.category || 'General';
+      document.getElementById('leadCategory').value = lead.category || 'Gastronomía';
       document.getElementById('leadStage').value = lead.stage;
       document.getElementById('leadNotes').value = lead.notes || '';
 
