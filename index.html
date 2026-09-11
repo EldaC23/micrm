@@ -33,14 +33,27 @@
   <!-- Header / Navbar -->
   <header class="bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 sticky top-0 z-30 shadow-sm">
     <div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-      <div class="flex items-center space-x-3">
-        <div class="bg-gradient-to-tr from-violet-500 to-fuchsia-500 p-3 rounded-2xl shadow-md text-white">
-          <i class="fa-solid fa-chart-kanban text-lg"></i>
+      
+      <!-- Brand Logo & Title -->
+      <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center space-x-3">
+          <div class="bg-gradient-to-tr from-violet-500 to-fuchsia-500 p-3 rounded-2xl shadow-md text-white">
+            <i class="fa-solid fa-chart-kanban text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">CRM Prospectos</h1>
+            <p class="text-xs font-medium text-slate-400">Embudos, Categorías & WhatsApp</p>
+          </div>
         </div>
-        <div>
-          <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">CRM Prospectos</h1>
-          <p class="text-xs font-medium text-slate-400">Embudos, Categorías & WhatsApp</p>
-        </div>
+      </div>
+
+      <!-- Live Search Bar -->
+      <div class="relative w-full sm:w-72">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input type="text" id="searchInput" oninput="renderBoard()" placeholder="Buscar prospecto, teléfono, nicho..." class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-indigo-300 rounded-2xl pl-9 pr-8 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-inner">
+        <button onclick="clearSearch()" id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs hidden">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </button>
       </div>
 
       <!-- Action Buttons -->
@@ -111,7 +124,7 @@
       <div class="bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
         <div class="flex items-center justify-between px-2 py-2 mb-2">
           <div class="flex items-center gap-2">
-            <div class="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
             <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Por Contactar</h2>
           </div>
           <span id="count-sin_contactar" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
@@ -246,6 +259,15 @@
     }
 
     function renderBoard() {
+      const searchInput = document.getElementById('searchInput');
+      const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      const clearBtn = document.getElementById('clearSearchBtn');
+
+      if (clearBtn) {
+        if (searchTerm.length > 0) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+
       const stages = ['sin_contactar', 'nuevo', 'propuesta', 'negociacion', 'ganado'];
       
       stages.forEach(stage => {
@@ -256,13 +278,22 @@
       let totalVal = 0;
       let countWon = 0;
 
+      // El render conserva el orden exacto del array (FIFO: los primeros del Excel arriba)
       leads.forEach(lead => {
         totalVal += Number(lead.value || 0);
         if (lead.stage === 'ganado') countWon++;
 
-        const card = createCardElement(lead);
-        const col = document.getElementById(`col-${lead.stage}`);
-        if (col) col.appendChild(card);
+        // Filtro de Búsqueda
+        const matchName = String(lead.name || '').toLowerCase().includes(searchTerm);
+        const matchPhone = String(lead.phone || '').toLowerCase().includes(searchTerm);
+        const matchCat = String(lead.category || '').toLowerCase().includes(searchTerm);
+        const matchNotes = String(lead.notes || '').toLowerCase().includes(searchTerm);
+
+        if (searchTerm === '' || matchName || matchPhone || matchCat || matchNotes) {
+          const card = createCardElement(lead);
+          const col = document.getElementById(`col-${lead.stage}`);
+          if (col) col.appendChild(card);
+        }
       });
 
       stages.forEach(stage => {
@@ -279,18 +310,23 @@
       document.getElementById('stat-rate').innerText = `${rate}%`;
     }
 
+    function clearSearch() {
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      renderBoard();
+    }
+
     function createCardElement(lead) {
       const card = document.createElement('div');
       
-      // Bento Styles por Etapa
-      // Bento Styles por Etapa
+      // Bento Styles por Etapa (Incluye estilo destacado Amarillo para Por Contactar)
       let bentoStyles = {
-        bg: "bg-[#FCE7F3] text-pink-950 border border-pink-300/80 shadow-sm",
-        iconBg: "bg-pink-300/50 text-pink-900",
-        tagBg: "bg-pink-200/80 text-pink-900 border-pink-300",
-        priceColor: "text-pink-950 font-extrabold",
-        descColor: "text-pink-900/80",
-        btnBg: "bg-pink-200/80 hover:bg-pink-300 text-pink-950 border-pink-300"
+        bg: "bg-[#FEF9C3] text-amber-950 border border-amber-300/80 shadow-sm",
+        iconBg: "bg-amber-300/50 text-amber-900",
+        tagBg: "bg-amber-200/80 text-amber-900 border-amber-300",
+        priceColor: "text-amber-950 font-extrabold",
+        descColor: "text-amber-900/80",
+        btnBg: "bg-amber-200/80 hover:bg-amber-300 text-amber-950 border-amber-300"
       };
 
       if (lead.stage === 'nuevo') {
@@ -339,7 +375,7 @@
       const waUrl = `https://wa.me/${cleanPhone}`;
       const category = lead.category || 'General';
 
-      // Iconos por categoría
+      // Iconos según la categoría
       let catIcon = "fa-tag";
       if (category === 'Salud') catIcon = "fa-user-doctor";
       if (category === 'Gastronomía' || category === 'Comidas') catIcon = "fa-utensils";
@@ -402,7 +438,7 @@
       }
     }
 
-    // CSV Import Handler (Todos entran a Por Contactar)
+    // CSV Import Handler (Conserva el orden del Excel de arriba a abajo)
     function handleFileSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -436,7 +472,7 @@
 
           if (countAdded > 0) {
             saveData();
-            alert(`¡Se importaron con éxito ${countAdded} prospectos a la columna "Por Contactar"!`);
+            alert(`¡Se importaron con éxito ${countAdded} prospectos manteniendo su orden original!`);
           } else {
             alert('No se encontraron filas válidas en el archivo CSV.');
           }
@@ -530,5 +566,4 @@
     }
   </script>
 </body>
-</html>
 </html>
