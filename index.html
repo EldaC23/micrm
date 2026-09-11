@@ -14,10 +14,11 @@
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
-      height: 6px;
+      height: 8px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: transparent;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 99px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
       background: rgba(0, 0, 0, 0.15);
@@ -32,7 +33,7 @@
 
   <!-- Header / Navbar -->
   <header class="bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
       
       <!-- Brand Logo & Title -->
       <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -91,7 +92,7 @@
   </header>
 
   <!-- Metrics Dashboard Bar -->
-  <section class="py-4 px-4 max-w-[1400px] mx-auto w-full">
+  <section class="py-4 px-4 max-w-[1600px] mx-auto w-full">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
         <div>
@@ -135,12 +136,12 @@
     </div>
   </section>
 
-  <!-- Main Content: Bento Kanban Board (5 Columns) -->
-  <main class="flex-1 px-4 pb-6 overflow-x-auto custom-scrollbar max-w-[1400px] mx-auto w-full">
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 min-w-[1100px] items-start">
+  <!-- Main Content: Horizontal Scroll Kanban Board (7 Columns) -->
+  <main class="flex-1 px-4 pb-6 overflow-x-auto custom-scrollbar max-w-[1600px] mx-auto w-full">
+    <div class="flex gap-4 min-w-max items-start pb-4">
 
       <!-- Column 1: Por Contactar -->
-      <div class="bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
         <div class="flex items-center justify-between px-2 py-2 mb-2">
           <div class="flex items-center gap-2">
             <div class="w-2.5 h-2.5 rounded-full bg-fuchsia-500"></div>
@@ -152,7 +153,7 @@
       </div>
 
       <!-- Column 2: Contacto Inicial -->
-      <div class="bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
         <div class="flex items-center justify-between px-2 py-2 mb-2">
           <div class="flex items-center gap-2">
             <div class="w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
@@ -163,8 +164,20 @@
         <div id="col-nuevo" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'nuevo')"></div>
       </div>
 
-      <!-- Column 3: Propuesta / Demo -->
-      <div class="bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+      <!-- Column 3: Seguimiento (Interno 1 y 2) -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-sky-500"></div>
+            <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Seguimiento</h2>
+          </div>
+          <span id="count-seguimiento" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-seguimiento" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'seguimiento')"></div>
+      </div>
+
+      <!-- Column 4: Propuesta / Demo -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
         <div class="flex items-center justify-between px-2 py-2 mb-2">
           <div class="flex items-center gap-2">
             <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
@@ -175,8 +188,8 @@
         <div id="col-propuesta" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'propuesta')"></div>
       </div>
 
-      <!-- Column 4: Negociación -->
-      <div class="bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+      <!-- Column 5: Negociación -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
         <div class="flex items-center justify-between px-2 py-2 mb-2">
           <div class="flex items-center gap-2">
             <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
@@ -187,8 +200,8 @@
         <div id="col-negociacion" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'negociacion')"></div>
       </div>
 
-      <!-- Column 5: Ganado -->
-      <div class="bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+      <!-- Column 6: Ganado -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
         <div class="flex items-center justify-between px-2 py-2 mb-2">
           <div class="flex items-center gap-2">
             <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
@@ -197,6 +210,18 @@
           <span id="count-ganado" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
         </div>
         <div id="col-ganado" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'ganado')"></div>
+      </div>
+
+      <!-- Column 7: Sin Respuesta / Archivado -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
+            <h2 class="font-bold text-xs text-slate-600 uppercase tracking-wider">Sin Respuesta</h2>
+          </div>
+          <span id="count-sin_respuesta" class="text-xs bg-white text-slate-600 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-sin_respuesta" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'sin_respuesta')"></div>
       </div>
 
     </div>
@@ -248,15 +273,26 @@
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Etapa Inicial</label>
-          <select id="leadStage" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
-            <option value="sin_contactar">Por Contactar</option>
-            <option value="nuevo">Contacto Inicial</option>
-            <option value="propuesta">Propuesta / Demo</option>
-            <option value="negociacion">Negociación</option>
-            <option value="ganado">Cierre / Ganado</option>
-          </select>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Etapa Inicial</label>
+            <select id="leadStage" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+              <option value="sin_contactar">Por Contactar</option>
+              <option value="nuevo">Contacto Inicial</option>
+              <option value="seguimiento">Seguimiento</option>
+              <option value="propuesta">Propuesta / Demo</option>
+              <option value="negociacion">Negociación</option>
+              <option value="ganado">Ganado</option>
+              <option value="sin_respuesta">Sin Respuesta</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nivel Seguimiento</label>
+            <select id="leadFollowStep" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+              <option value="1">Seguimiento 1</option>
+              <option value="2">Seguimiento 2</option>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -297,7 +333,7 @@
         else clearBtn.classList.add('hidden');
       }
 
-      const stages = ['sin_contactar', 'nuevo', 'propuesta', 'negociacion', 'ganado'];
+      const stages = ['sin_contactar', 'nuevo', 'seguimiento', 'propuesta', 'negociacion', 'ganado', 'sin_respuesta'];
       
       stages.forEach(stage => {
         const col = document.getElementById(`col-${stage}`);
@@ -380,6 +416,15 @@
           descColor: "text-white/90",
           btnBg: "bg-white/20 hover:bg-white/30 text-white border-white/30"
         };
+      } else if (lead.stage === 'seguimiento') {
+        bentoStyles = {
+          bg: "bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-600 text-white border-0 shadow-sm",
+          iconBg: "bg-white/20 text-white",
+          tagBg: "bg-white/20 text-white border-white/30",
+          priceColor: "text-white font-extrabold",
+          descColor: "text-white/90",
+          btnBg: "bg-white/20 hover:bg-white/30 text-white border-white/30"
+        };
       } else if (lead.stage === 'propuesta') {
         bentoStyles = {
           bg: "bg-[#FEF6DB] text-amber-950 border border-amber-200/60 shadow-sm",
@@ -407,6 +452,15 @@
           descColor: "text-white/90",
           btnBg: "bg-white/20 hover:bg-white/30 text-white border-white/30"
         };
+      } else if (lead.stage === 'sin_respuesta') {
+        bentoStyles = {
+          bg: "bg-slate-100 text-slate-700 border border-slate-200 shadow-sm",
+          iconBg: "bg-slate-200 text-slate-600",
+          tagBg: "bg-slate-200 text-slate-600 border-slate-300",
+          priceColor: "text-slate-700 font-bold",
+          descColor: "text-slate-500",
+          btnBg: "bg-slate-200 hover:bg-slate-300 text-slate-700 border-slate-300"
+        };
       }
 
       card.className = `${bentoStyles.bg} rounded-[24px] p-3.5 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing relative group`;
@@ -428,6 +482,8 @@
       const cleanInsta = rawInsta.startsWith('@') ? rawInsta : (rawInsta ? `@${rawInsta}` : '');
       const instaUrl = cleanInsta ? `https://instagram.com/${cleanInsta.replace('@', '')}` : '';
 
+      const followStep = lead.followStep || '1';
+
       card.innerHTML = `
         <div class="flex items-center justify-between gap-2 mb-2">
           <div class="w-8 h-8 rounded-xl ${bentoStyles.iconBg} flex items-center justify-center">
@@ -445,9 +501,17 @@
         </div>
 
         <div class="mb-2">
-          <span class="inline-block text-[9px] font-bold uppercase tracking-wider ${bentoStyles.tagBg} border px-2 py-0.5 rounded-full mb-1">
-            ${escapeHtml(category)}
-          </span>
+          <div class="flex items-center gap-1.5 flex-wrap mb-1">
+            <span class="inline-block text-[9px] font-bold uppercase tracking-wider ${bentoStyles.tagBg} border px-2 py-0.5 rounded-full">
+              ${escapeHtml(category)}
+            </span>
+            ${lead.stage === 'seguimiento' ? `
+              <button onclick="toggleFollowStep('${lead.id}')" class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${bentoStyles.tagBg} border cursor-pointer hover:scale-105 transition-transform" title="Clic para cambiar entre Seguimiento 1 y 2">
+                Seguimiento ${followStep}
+              </button>
+            ` : ''}
+          </div>
+          
           <h4 class="font-extrabold text-sm leading-tight tracking-tight">${escapeHtml(lead.name)}</h4>
           
           ${cleanInsta ? `
@@ -470,15 +534,25 @@
             <select onchange="moveLead('${lead.id}', this.value)" class="bg-black/10 text-current border-0 rounded-xl px-1 py-1 text-[9px] font-bold focus:outline-none cursor-pointer">
               <option value="sin_contactar" class="text-slate-800" ${lead.stage === 'sin_contactar' ? 'selected' : ''}>Por Contactar</option>
               <option value="nuevo" class="text-slate-800" ${lead.stage === 'nuevo' ? 'selected' : ''}>Contacto</option>
+              <option value="seguimiento" class="text-slate-800" ${lead.stage === 'seguimiento' ? 'selected' : ''}>Seguimiento</option>
               <option value="propuesta" class="text-slate-800" ${lead.stage === 'propuesta' ? 'selected' : ''}>Demo</option>
               <option value="negociacion" class="text-slate-800" ${lead.stage === 'negociacion' ? 'selected' : ''}>Negociación</option>
               <option value="ganado" class="text-slate-800" ${lead.stage === 'ganado' ? 'selected' : ''}>Ganado</option>
+              <option value="sin_respuesta" class="text-slate-800" ${lead.stage === 'sin_respuesta' ? 'selected' : ''}>Sin Resp.</option>
             </select>
           </div>
         </div>
       `;
 
       return card;
+    }
+
+    function toggleFollowStep(id) {
+      const lead = leads.find(l => l.id === id);
+      if (lead) {
+        lead.followStep = lead.followStep === '2' ? '1' : '2';
+        saveData();
+      }
     }
 
     function autoMoveToContacted(id) {
@@ -516,6 +590,7 @@
                 value: Number(value) || 0,
                 category: String(category).trim(),
                 stage: 'sin_contactar',
+                followStep: '1',
                 notes: String(notes).trim()
               });
               countAdded++;
@@ -524,7 +599,7 @@
 
           if (countAdded > 0) {
             saveData();
-            alert(`¡Se importaron con éxito ${countAdded} prospectos manteniendo su orden original!`);
+            alert(`¡Se importaron con éxito ${countAdded} prospectos!`);
           } else {
             alert('No se encontraron filas válidas en el archivo CSV.');
           }
@@ -572,6 +647,7 @@
       document.getElementById('leadValue').value = lead.value;
       document.getElementById('leadCategory').value = lead.category || 'Gastronomía';
       document.getElementById('leadStage').value = lead.stage;
+      document.getElementById('leadFollowStep').value = lead.followStep || '1';
       document.getElementById('leadNotes').value = lead.notes || '';
 
       document.getElementById('modalTitle').innerText = 'Editar Prospecto';
@@ -587,10 +663,11 @@
       const value = document.getElementById('leadValue').value;
       const category = document.getElementById('leadCategory').value;
       const stage = document.getElementById('leadStage').value;
+      const followStep = document.getElementById('leadFollowStep').value;
       const notes = document.getElementById('leadNotes').value;
 
       if (id) {
-        leads = leads.map(l => l.id === id ? { ...l, name, phone, instagram, value, category, stage, notes } : l);
+        leads = leads.map(l => l.id === id ? { ...l, name, phone, instagram, value, category, stage, followStep, notes } : l);
       } else {
         leads.push({
           id: Date.now().toString(),
@@ -600,6 +677,7 @@
           value,
           category,
           stage,
+          followStep,
           notes
         });
       }
