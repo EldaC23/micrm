@@ -526,7 +526,11 @@
       const followStep = lead.followStep || '1';
       const noRespReason = lead.noRespReason || 'no_respondio';
       const reasonLabel = noRespReason === 'sin_interes' ? 'Sin Interés' : 'No Respondió';
-      const leadDateStr = lead.date ? formatDateDisplay(lead.date) : formatDateDisplay(getTodayString());
+      if (!lead.date) {
+  lead.date = getTodayString();
+  saveData();
+}
+const leadDateStr = formatDateDisplay(lead.date);
 
       card.innerHTML = `
         <div class="flex items-center justify-between gap-2 mb-2">
