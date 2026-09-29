@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini CRM Interactivo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 99px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 99px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-[#F6F8FA] text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- Header / Navbar -->
+  <header class="bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      
+      <!-- Brand Logo & Title -->
+      <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center space-x-3">
+          <div class="bg-gradient-to-tr from-fuchsia-500 to-indigo-500 p-3 rounded-2xl shadow-md text-white">
+            <i class="fa-solid fa-chart-kanban text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">CRM Prospectos</h1>
+            <p class="text-xs font-medium text-slate-400">Embudos, Categorías & WhatsApp</p>
+            <button id="cloudStatus" onclick="openCloudModal()" class="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all">
+              <i class="fa-solid fa-cloud text-[10px]"></i> <span>Conectar nube</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Search & Category Filter Bar -->
+      <div class="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto flex-1 max-w-xl justify-center">
+        <!-- Filter by Category -->
+        <div class="relative w-full sm:w-48">
+          <i class="fa-solid fa-filter absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <select id="categoryFilter" onchange="renderBoard()" class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-fuchsia-300 rounded-2xl pl-9 pr-3 py-2 text-xs font-bold text-slate-700 focus:outline-none transition-all shadow-inner cursor-pointer appearance-none">
+            <option value="ALL">Todas las Categorías</option>
+            <option value="Gastronomía">🍕 Gastronomía / Menús</option>
+            <option value="Salud">🩺 Salud / Médico</option>
+            <option value="Entretenimiento">🎭 Entretenimiento</option>
+            <option value="Comercio">🛍️ Comercio / Tienda</option>
+            <option value="Servicios">💼 Servicios Prof.</option>
+            <option value="Comidas">🍔 Comidas Rápida</option>
+            <option value="General">📌 General</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+        </div>
+
+        <!-- Live Search Bar -->
+        <div class="relative w-full sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="searchInput" oninput="renderBoard()" placeholder="Buscar prospecto, teléfono, instagram..." class="w-full bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-fuchsia-300 rounded-2xl pl-9 pr-8 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-inner">
+          <button onclick="clearSearch()" id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs hidden">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-end flex-wrap">
+        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
+        
+        <button onclick="document.getElementById('csvFileInput').click()" class="bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all duration-200 flex items-center gap-2 active:scale-95">
+          <i class="fa-solid fa-file-csv text-emerald-500 text-sm"></i> Importar Excel
+        </button>
+
+        <input type="file" id="backupFileInput" accept=".json,application/json" class="hidden" onchange="restoreBackup(event)">
+
+        <button onclick="document.getElementById('backupFileInput').click()" class="bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all duration-200 flex items-center gap-2 active:scale-95" title="Cargar un archivo de respaldo (.json)">
+          <i class="fa-solid fa-clock-rotate-left text-sky-500 text-sm"></i> Restaurar
+        </button>
+
+        <button onclick="exportBackup()" class="bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all duration-200 flex items-center gap-2 active:scale-95" title="Descargar todos tus prospectos con sus etapas">
+          <i class="fa-solid fa-download text-fuchsia-500 text-sm"></i> Respaldo
+        </button>
+
+        <button onclick="openModal()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all duration-200 flex items-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95">
+          <i class="fa-solid fa-plus text-xs"></i> Nuevo Lead
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Backup Reminder Banner -->
+  <div id="backupBanner" class="hidden px-4 pt-4 max-w-[1600px] mx-auto w-full">
+    <div class="bg-amber-50 border border-amber-200 rounded-3xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+        </div>
+        <p id="backupBannerText" class="text-xs font-semibold text-amber-800"></p>
+      </div>
+      <button onclick="exportBackup()" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-2xl text-xs transition-all duration-200 flex items-center justify-center gap-2 active:scale-95 shrink-0">
+        <i class="fa-solid fa-download text-xs"></i> Descargar respaldo ahora
+      </button>
+    </div>
+  </div>
+
+  <!-- Metrics Dashboard Bar -->
+  <section class="py-4 px-4 max-w-[1600px] mx-auto w-full">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-400 font-semibold">Leads (Filtrados)</p>
+          <p id="stat-total" class="text-xl font-extrabold text-slate-800 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-fuchsia-500 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-users text-sm"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-400 font-semibold">Valor Pipeline</p>
+          <p id="stat-value" class="text-xl font-extrabold text-emerald-600 mt-0.5">$0</p>
+        </div>
+        <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-sack-dollar text-sm"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-400 font-semibold">Ganados</p>
+          <p id="stat-won" class="text-xl font-extrabold text-indigo-600 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-trophy text-sm"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-400 font-semibold">Conversión</p>
+          <p id="stat-rate" class="text-xl font-extrabold text-amber-500 mt-0.5">0%</p>
+        </div>
+        <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-chart-line text-sm"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content: Horizontal Scroll Kanban Board (7 Columns) -->
+  <main class="flex-1 px-4 pb-6 overflow-x-auto custom-scrollbar max-w-[1600px] mx-auto w-full">
+    <div class="flex gap-4 min-w-max items-start pb-4">
+
+      <!-- Column 1: Por Contactar -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-fuchsia-500"></div>
+            <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Por Contactar</h2>
+          </div>
+          <span id="count-sin_contactar" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-sin_contactar" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'sin_contactar')"></div>
+      </div>
+
+      <!-- Column 2: Contacto Inicial -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+            <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Contacto Inicial</h2>
+          </div>
+          <span id="count-nuevo" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-nuevo" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'nuevo')"></div>
+      </div>
+
+      <!-- Column 3: Seguimiento (Interno 1 y 2) -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-sky-500"></div>
+            <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Seguimiento</h2>
+          </div>
+          <span id="count-seguimiento" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-seguimiento" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'seguimiento')"></div>
+      </div>
+
+      <!-- Column 4: Propuesta / Demo -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+            <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Propuesta / Demo</h2>
+          </div>
+          <span id="count-propuesta" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-propuesta" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'propuesta')"></div>
+      </div>
+
+      <!-- Column 5: Negociación -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+            <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Negociación</h2>
+          </div>
+          <span id="count-negociacion" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-negociacion" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'negociacion')"></div>
+      </div>
+
+      <!-- Column 6: Ganado -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+            <h2 class="font-bold text-xs text-slate-700 uppercase tracking-wider">Ganado</h2>
+          </div>
+          <span id="count-ganado" class="text-xs bg-white text-slate-700 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-ganado" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'ganado')"></div>
+      </div>
+
+      <!-- Column 7: Sin Respuesta / Archivado -->
+      <div class="w-[270px] flex-shrink-0 bg-slate-200/50 p-3.5 rounded-[28px] flex flex-col max-h-[75vh]">
+        <div class="flex items-center justify-between px-2 py-2 mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
+            <h2 class="font-bold text-xs text-slate-600 uppercase tracking-wider">Sin Respuesta</h2>
+          </div>
+          <span id="count-sin_respuesta" class="text-xs bg-white text-slate-600 font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+        </div>
+        <div id="col-sin_respuesta" class="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 pr-1 min-h-[150px]" ondragover="allowDrop(event)" ondrop="drop(event, 'sin_respuesta')"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal: Conexión con Google Sheets -->
+  <div id="cloudModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-md rounded-[32px] shadow-2xl p-6 relative border border-slate-100">
+      <button onclick="closeCloudModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 class="text-lg font-extrabold text-slate-900 mb-1">Guardar en la nube</h3>
+      <p class="text-xs text-slate-500 mb-4">Tus prospectos se guardarán en tu hoja de Google Sheets. Solo necesitas hacer esto una vez en cada dispositivo.</p>
+
+      <label class="block text-xs font-bold text-slate-600 mb-1">Enlace de Apps Script (termina en /exec)</label>
+      <input id="cloudUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-100/80 focus:bg-white border border-transparent focus:border-fuchsia-300 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none mb-3">
+
+      <label class="block text-xs font-bold text-slate-600 mb-1">Clave secreta</label>
+      <input id="cloudKeyInput" type="password" placeholder="La misma clave que pusiste en Apps Script" class="w-full bg-slate-100/80 focus:bg-white border border-transparent focus:border-fuchsia-300 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none mb-2">
+
+      <p id="cloudModalMsg" class="text-xs font-semibold min-h-[1.25rem] mb-3"></p>
+
+      <div class="flex flex-col-reverse sm:flex-row gap-2 justify-end">
+        <button id="cloudDisconnectBtn" onclick="disconnectCloud()" class="hidden text-rose-500 hover:bg-rose-50 font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all">Desconectar</button>
+        <button onclick="connectCloud()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-solid fa-cloud-arrow-up text-xs"></i> Conectar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Crear / Editar Lead -->
+  <div id="leadModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-md rounded-[32px] shadow-2xl p-6 relative border border-slate-100">
+      <button onclick="closeModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 id="modalTitle" class="text-lg font-extrabold text-slate-900 mb-4">Agregar Nuevo Prospecto</h3>
+      
+      <form id="leadForm" onsubmit="saveLead(event)" class="space-y-4">
+        <input type="hidden" id="leadId">
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre o Empresa *</label>
+          <input type="text" id="leadName" required placeholder="Ej: Pizzería Gran Plaza" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono / WhatsApp *</label>
+            <input type="text" id="leadPhone" required placeholder="Ej: +584121234567" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Instagram / Redes</label>
+            <input type="text" id="leadInstagram" placeholder="Ej: @pizzeriagranplaza" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Categoría / Nicho</label>
+            <select id="leadCategory" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+              <option value="Gastronomía">🍕 Gastronomía / Menús</option>
+              <option value="Salud">🩺 Salud / Médico</option>
+              <option value="Entretenimiento">🎭 Entretenimiento</option>
+              <option value="Comercio">🛍️ Comercio / Tienda</option>
+              <option value="Servicios">💼 Servicios Prof.</option>
+              <option value="Comidas">🍔 Comidas Rápida</option>
+              <option value="General">📌 General</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Est. ($)</label>
+            <input type="number" id="leadValue" min="0" placeholder="Ej: 350" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Etapa Inicial</label>
+            <select id="leadStage" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+              <option value="sin_contactar">Por Contactar</option>
+              <option value="nuevo">Contacto Inicial</option>
+              <option value="seguimiento">Seguimiento</option>
+              <option value="propuesta">Propuesta / Demo</option>
+              <option value="negociacion">Negociación</option>
+              <option value="ganado">Ganado</option>
+              <option value="sin_respuesta">Sin Respuesta</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nivel Seguimiento</label>
+            <select id="leadFollowStep" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+              <option value="1">Seguimiento 1</option>
+              <option value="2">Seguimiento 2</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Motivo (Sin Resp.)</label>
+            <select id="leadNoRespReason" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+              <option value="no_respondio">No respondió</option>
+              <option value="sin_interes">Sin interés</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha de Registro / Cambio</label>
+            <input type="date" id="leadDate" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Notas / Detalles</label>
+          <textarea id="leadNotes" rows="2" placeholder="Ej: Interesado en menú interactivo con código QR" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-2xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-2xl shadow-md">Guardar Prospecto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let leads = JSON.parse(localStorage.getItem('crm_leads_data')) || [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderBoard();
+      updateBackupBanner();
+      updateCloudStatus();
+      if (cloudEnabled()) cloudStartup();
+    });
+
+    // ===== Nube (Google Sheets vía Apps Script) =====
+    const CLOUD_URL_KEY = 'crm_cloud_url';
+    const CLOUD_SECRET_KEY = 'crm_cloud_key';
+    const CLOUD_SNAPSHOT_KEY = 'crm_cloud_snapshot';
+
+    let cloudState = 'off';       // off | loading | saving | saved | error
+    let cloudTimer = null;
+    let cloudRetryTimer = null;
+    let cloudBusy = false;
+    let cloudAgain = false;
+
+    function cloudUrl() { return localStorage.getItem(CLOUD_URL_KEY) || ''; }
+    function cloudKey() { return localStorage.getItem(CLOUD_SECRET_KEY) || ''; }
+    function cloudEnabled() { return !!(cloudUrl() && cloudKey()); }
+
+    function getSnapshot() {
+      try { return JSON.parse(localStorage.getItem(CLOUD_SNAPSHOT_KEY)) || null; }
+      catch (e) { return null; }
+    }
+    function setSnapshot(snap) { localStorage.setItem(CLOUD_SNAPSHOT_KEY, JSON.stringify(snap)); }
+    function snapshotFrom(list) {
+      const snap = {};
+      list.forEach(l => { snap[l.id] = JSON.stringify(l); });
+      return snap;
+    }
+
+    function pendingChanges() {
+      const snap = getSnapshot() || {};
+      const upserts = leads.filter(l => snap[l.id] !== JSON.stringify(l));
+      const ids = new Set(leads.map(l => l.id));
+      const deletes = Object.keys(snap).filter(id => !ids.has(id));
+      return { upserts, deletes };
+    }
+
+    function updateCloudStatus(state) {
+      if (state) cloudState = state;
+      if (!cloudEnabled()) cloudState = 'off';
+      const el = document.getElementById('cloudStatus');
+      if (!el) return;
+      const styles = {
+        off:     ['bg-slate-100 text-slate-500', 'fa-cloud', 'Conectar nube'],
+        loading: ['bg-sky-50 text-sky-600', 'fa-rotate fa-spin', 'Cargando de la nube…'],
+        saving:  ['bg-sky-50 text-sky-600', 'fa-rotate fa-spin', 'Guardando…'],
+        saved:   ['bg-emerald-50 text-emerald-600', 'fa-cloud', 'Guardado en la nube'],
+        error:   ['bg-amber-50 text-amber-700', 'fa-triangle-exclamation', 'Sin conexión · reintentando']
+      };
+      const [cls, icon, label] = styles[cloudState];
+      el.className = `mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full hover:opacity-80 transition-all ${cls}`;
+      el.innerHTML = `<i class="fa-solid ${icon} text-[10px]"></i> <span>${label}</span>`;
+    }
+
+    async function cloudGet() {
+      const url = `${cloudUrl()}?key=${encodeURIComponent(cloudKey())}&t=${Date.now()}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Error desconocido');
+      return data.leads || [];
+    }
+
+    async function cloudPost(upserts, deletes) {
+      const res = await fetch(cloudUrl(), {
+        method: 'POST',
+        body: JSON.stringify({ key: cloudKey(), upserts, deletes })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    }
+
+    // Reemplaza los datos locales por los de la nube (sin volver a subirlos)
+    function adoptCloudLeads(serverLeads) {
+      leads = serverLeads;
+      localStorage.setItem('crm_leads_data', JSON.stringify(leads));
+      setSnapshot(snapshotFrom(leads));
+      renderBoard();
+      updateBackupBanner();
+    }
+
+    // Primera sincronización en este dispositivo
+    async function firstSync(serverLeads) {
+      if (serverLeads.length === 0 && leads.length > 0) {
+        // Hoja vacía: subir lo que ya tienes en este navegador
+        await cloudPost(leads, []);
+        setSnapshot(snapshotFrom(leads));
+        return 'uploaded';
+      }
+      // La hoja ya tiene datos: esos mandan. Guardamos una copia de lo local por si acaso.
+      if (leads.length > 0) {
+        localStorage.setItem('crm_leads_before_cloud', JSON.stringify(leads));
+      }
+      adoptCloudLeads(serverLeads);
+      return 'downloaded';
+    }
+
+    // Al abrir el CRM: sube cambios pendientes y luego trae lo último de la nube
+    async function cloudStartup() {
+      updateCloudStatus('loading');
+      try {
+        if (!getSnapshot()) {
+          await firstSync(await cloudGet());
+        } else {
+          const { upserts, deletes } = pendingChanges();
+          if (upserts.length || deletes.length) await cloudPost(upserts, deletes);
+          adoptCloudLeads(await cloudGet());
+        }
+        updateCloudStatus('saved');
+        updateBackupBanner();
+      } catch (err) {
+        console.warn('Nube:', err);
+        updateCloudStatus('error');
+        scheduleCloudRetry();
+      }
+    }
+
+    function scheduleCloudSync() {
+      if (!cloudEnabled() || !getSnapshot()) return;
+      updateCloudStatus('saving');
+      clearTimeout(cloudTimer);
+      cloudTimer = setTimeout(cloudPush, 700);
+    }
+
+    function scheduleCloudRetry() {
+      clearTimeout(cloudRetryTimer);
+      cloudRetryTimer = setTimeout(() => {
+        if (getSnapshot()) cloudPush(); else cloudStartup();
+      }, 15000);
+    }
+
+    async function cloudPush() {
+      if (cloudBusy) { cloudAgain = true; return; }
+      const { upserts, deletes } = pendingChanges();
+      if (!upserts.length && !deletes.length) { updateCloudStatus('saved'); return; }
+
+      cloudBusy = true;
+      updateCloudStatus('saving');
+      const sent = upserts.map(l => [l.id, JSON.stringify(l)]);
+      try {
+        await cloudPost(upserts, deletes);
+        const snap = getSnapshot() || {};
+        sent.forEach(([id, json]) => { snap[id] = json; });
+        deletes.forEach(id => { delete snap[id]; });
+        setSnapshot(snap);
+        updateCloudStatus('saved');
+      } catch (err) {
+        console.warn('Nube:', err);
+        updateCloudStatus('error');
+        scheduleCloudRetry();
+      } finally {
+        cloudBusy = false;
+        if (cloudAgain) { cloudAgain = false; cloudPush(); }
+      }
+    }
+
+    // Al volver a la pestaña, trae cambios hechos desde otro dispositivo
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !cloudEnabled() || !getSnapshot()) return;
+      if (cloudBusy || cloudState === 'saving') return;
+      const { upserts, deletes } = pendingChanges();
+      if (upserts.length || deletes.length) { cloudPush(); return; }
+      cloudGet()
+        .then(serverLeads => { adoptCloudLeads(serverLeads); updateCloudStatus('saved'); })
+        .catch(() => {});
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      if (!cloudEnabled() || !getSnapshot()) return;
+      const { upserts, deletes } = pendingChanges();
+      if (upserts.length || deletes.length) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    function openCloudModal() {
+      document.getElementById('cloudUrlInput').value = cloudUrl();
+      document.getElementById('cloudKeyInput').value = cloudKey();
+      document.getElementById('cloudModalMsg').textContent = '';
+      document.getElementById('cloudDisconnectBtn').classList.toggle('hidden', !cloudEnabled());
+      document.getElementById('cloudModal').classList.remove('hidden');
+    }
+
+    function closeCloudModal() {
+      document.getElementById('cloudModal').classList.add('hidden');
+    }
+
+    function setCloudMsg(text, ok) {
+      const el = document.getElementById('cloudModalMsg');
+      el.textContent = text;
+      el.className = `text-xs font-semibold min-h-[1.25rem] mb-3 ${ok ? 'text-emerald-600' : 'text-rose-500'}`;
+    }
+
+    async function connectCloud() {
+      const url = document.getElementById('cloudUrlInput').value.trim();
+      const key = document.getElementById('cloudKeyInput').value.trim();
+      if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)) {
+        setCloudMsg('El enlace debe empezar con https://script.google.com/macros/s/ y terminar en /exec');
+        return;
+      }
+      if (!key) { setCloudMsg('Escribe tu clave secreta.'); return; }
+
+      localStorage.setItem(CLOUD_URL_KEY, url);
+      localStorage.setItem(CLOUD_SECRET_KEY, key);
+      setCloudMsg('Conectando…', true);
+      updateCloudStatus('loading');
+
+      let serverLeads;
+      try {
+        serverLeads = await cloudGet();
+      } catch (err) {
+        localStorage.removeItem(CLOUD_URL_KEY);
+        localStorage.removeItem(CLOUD_SECRET_KEY);
+        updateCloudStatus('off');
+        setCloudMsg(err.message === 'Clave incorrecta'
+          ? 'La clave no coincide con la de Apps Script.'
+          : `No se pudo conectar: ${err.message}`);
+        return;
+      }
+
+      try {
+        if (serverLeads.length === 0 && leads.length > 0) {
+          setCloudMsg(`Subiendo tus ${leads.length} prospectos a la nube…`, true);
+        }
+        await firstSync(serverLeads);
+        updateCloudStatus('saved');
+        updateBackupBanner();
+        setCloudMsg('¡Conectado! Tus prospectos ahora se guardan en la nube.', true);
+        setTimeout(closeCloudModal, 1200);
+      } catch (err) {
+        updateCloudStatus('error');
+        setCloudMsg(`Conectado, pero falló la subida: ${err.message}. Se reintentará sola.`);
+        scheduleCloudRetry();
+      }
+    }
+
+    function disconnectCloud() {
+      if (!confirm('¿Desconectar la nube en este dispositivo? Tus datos seguirán en Google Sheets, pero este navegador dejará de sincronizar.')) return;
+      localStorage.removeItem(CLOUD_URL_KEY);
+      localStorage.removeItem(CLOUD_SECRET_KEY);
+      localStorage.removeItem(CLOUD_SNAPSHOT_KEY);
+      updateCloudStatus('off');
+      updateBackupBanner();
+      closeCloudModal();
+    }
+
+    function getTodayString() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function formatDateDisplay(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`;
+      }
+      return dateStr;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function saveData() {
+      localStorage.setItem('crm_leads_data', JSON.stringify(leads));
+      renderBoard();
+      updateBackupBanner();
+      scheduleCloudSync();
+    }
+
+    // ===== Respaldo y restauración =====
+    const BACKUP_KEY = 'crm_last_backup';
+    const BACKUP_REMINDER_DAYS = 3;
+
+    function exportBackup() {
+      if (leads.length === 0) {
+        alert('No hay prospectos para respaldar todavía.');
+        return;
+      }
+      const backup = {
+        app: 'micrm',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        total: leads.length,
+        leads: leads
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `respaldo-crm-${getTodayString()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+      updateBackupBanner();
+    }
+
+    function restoreBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const restored = Array.isArray(parsed) ? parsed : parsed.leads;
+
+          if (!Array.isArray(restored) || !restored.every(l => l && l.id && l.name)) {
+            alert('Este archivo no parece un respaldo válido del CRM.');
+            return;
+          }
+
+          const fecha = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString() : 'fecha desconocida';
+          const mensaje = leads.length > 0
+            ? `Vas a restaurar ${restored.length} prospectos (respaldo del ${fecha}).\n\nEsto REEMPLAZA los ${leads.length} prospectos que tienes ahora. ¿Continuar?`
+            : `Vas a restaurar ${restored.length} prospectos (respaldo del ${fecha}). ¿Continuar?`;
+
+          if (!confirm(mensaje)) return;
+
+          // Copia de seguridad de lo actual, por si te arrepientes
+          if (leads.length > 0) {
+            localStorage.setItem('crm_leads_before_restore', JSON.stringify(leads));
+          }
+
+          leads = restored;
+          localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+          saveData();
+          alert(`¡Listo! Se restauraron ${restored.length} prospectos con sus etapas.`);
+        } catch (err) {
+          alert('No se pudo leer el archivo. Asegúrate de elegir un respaldo .json del CRM.');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function updateBackupBanner() {
+      const banner = document.getElementById('backupBanner');
+      const text = document.getElementById('backupBannerText');
+      if (!banner || !text) return;
+
+      if (leads.length === 0 || (cloudEnabled() && getSnapshot())) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const last = localStorage.getItem(BACKUP_KEY);
+      if (!last) {
+        text.textContent = `Tienes ${leads.length} prospectos y nunca has descargado un respaldo. Si se borra el caché del navegador, se pierden.`;
+        banner.classList.remove('hidden');
+        return;
+      }
+
+      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+      if (days >= BACKUP_REMINDER_DAYS) {
+        text.textContent = `Tu último respaldo fue hace ${days} días. Descarga uno nuevo para no perder tus avances.`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function renderBoard() {
+      const searchInput = document.getElementById('searchInput');
+      const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      const clearBtn = document.getElementById('clearSearchBtn');
+
+      const categoryFilter = document.getElementById('categoryFilter');
+      const selectedCategory = categoryFilter ? categoryFilter.value : 'ALL';
+
+      if (clearBtn) {
+        if (searchTerm.length > 0) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+
+      const stages = ['sin_contactar', 'nuevo', 'seguimiento', 'propuesta', 'negociacion', 'ganado', 'sin_respuesta'];
+      
+      stages.forEach(stage => {
+        const col = document.getElementById(`col-${stage}`);
+        if(col) col.innerHTML = '';
+      });
+
+      let totalVal = 0;
+      let countWon = 0;
+      let totalFilteredLeads = 0;
+
+      leads.forEach(lead => {
+        const matchesCategory = (selectedCategory === 'ALL') || (lead.category === selectedCategory);
+
+        const matchName = String(lead.name || '').toLowerCase().includes(searchTerm);
+        const matchPhone = String(lead.phone || '').toLowerCase().includes(searchTerm);
+        const matchInsta = String(lead.instagram || '').toLowerCase().includes(searchTerm);
+        const matchCat = String(lead.category || '').toLowerCase().includes(searchTerm);
+        const matchNotes = String(lead.notes || '').toLowerCase().includes(searchTerm);
+        const matchesSearch = (searchTerm === '' || matchName || matchPhone || matchInsta || matchCat || matchNotes);
+
+        if (matchesCategory && matchesSearch) {
+          totalFilteredLeads++;
+          totalVal += Number(lead.value || 0);
+          if (lead.stage === 'ganado') countWon++;
+
+          const card = createCardElement(lead);
+          const col = document.getElementById(`col-${lead.stage}`);
+          if (col) col.appendChild(card);
+        }
+      });
+
+      stages.forEach(stage => {
+        const count = leads.filter(l => {
+          const catOk = (selectedCategory === 'ALL') || (l.category === selectedCategory);
+          const searchOk = searchTerm === '' || 
+            String(l.name || '').toLowerCase().includes(searchTerm) ||
+            String(l.phone || '').toLowerCase().includes(searchTerm) ||
+            String(l.instagram || '').toLowerCase().includes(searchTerm) ||
+            String(l.category || '').toLowerCase().includes(searchTerm) ||
+            String(l.notes || '').toLowerCase().includes(searchTerm);
+          return l.stage === stage && catOk && searchOk;
+        }).length;
+
+        const elem = document.getElementById(`count-${stage}`);
+        if(elem) elem.innerText = count;
+      });
+
+      document.getElementById('stat-total').innerText = totalFilteredLeads;
+      document.getElementById('stat-value').innerText = `$${totalVal.toLocaleString()}`;
+      document.getElementById('stat-won').innerText = countWon;
+      
+      const rate = totalFilteredLeads > 0 ? Math.round((countWon / totalFilteredLeads) * 100) : 0;
+      document.getElementById('stat-rate').innerText = `${rate}%`;
+    }
+
+    function clearSearch() {
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      renderBoard();
+    }
+
+    function createCardElement(lead) {
+      const card = document.createElement('div');
+      
+      let bentoStyles = {
+        bg: "bg-gradient-to-tr from-fuchsia-600 via-pink-500 to-rose-500 text-white border-0 shadow-sm",
+        iconBg: "bg-white/20 text-white",
+        tagBg: "bg-white/20 text-white border-white/30",
+        priceColor: "text-white font-extrabold",
+        descColor: "text-white/90",
+        btnBg: "bg-white/20 hover:bg-white/30 text-white border-white/30"
+      };
+
+      if (lead.stage === 'nuevo') {
+        bentoStyles = {
+          bg: "bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white border-0 shadow-sm",
+          iconBg: "bg-white/20 text-white",
+          tagBg: "bg-white/20 text-white border-white/30",
+          priceColor: "text-white font-extrabold",
+          descColor: "text-white/90",
+          btnBg: "bg-white/20 hover:bg-white/30 text-white border-white/30"
+        };
+      } else if (lead.stage === 'seguimiento') {
+        bentoStyles = {
+          bg: "bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-600 text-white border-0 shadow-sm",
+          iconBg: "bg-white/20 text-white",
+          tagBg: "bg-white/20 text-white border-white/30",
+          priceColor: "text-white font-extrabold",
+          descColor: "text-white/90",
+          btnBg: "bg-white/20 hover:bg-white/30 text-white border-white/30"
+        };
+      } else if (lead.stage === 'propuesta') {
+        bentoStyles = {
+          bg: "bg-[#FEF6DB] text-amber-950 border border-amber-200/60 shadow-sm",
+          iconBg: "bg-amber-400/30 text-amber-900",
+          tagBg: "bg-amber-200/50 text-amber-900 border-amber-300/40",
+          priceColor: "text-amber-900 font-extrabold",
+          descColor: "text-amber-800/80",
+          btnBg: "bg-amber-200/60 hover:bg-amber-300/60 text-amber-900 border-amber-300/50"
+        };
+      } else if (lead.stage === 'negociacion') {
+        bentoStyles = {
+          bg: "bg-[#E1F9F0] text-emerald-950 border border-emerald-200/60 shadow-sm",
+          iconBg: "bg-emerald-400/30 text-emerald-900",
+          tagBg: "bg-emerald-200/50 text-emerald-900 border-emerald-300/40",
+          priceColor: "text-emerald-900 font-extrabold",
+          descColor: "text-emerald-800/80",
+          btnBg: "bg-emerald-200/60 hover:bg-emerald-300/60 text-emerald-900 border-emerald-300/50"
+        };
+      } else if (lead.stage === 'ganado') {
+        bentoStyles = {
+          bg: "bg-gradient-to-tr from-amber-400 via-rose-400 to-pink-500 text-white border-0 shadow-sm",
+          iconBg: "bg-white/20 text-white",
+          tagBg: "bg-white/20 text-white border-white/30",
+          priceColor: "text-white font-extrabold",
+          descColor: "text-white/90",
+          btnBg: "bg-white/20 hover:bg-white/30 text-white border-white/30"
+        };
+      } else if (lead.stage === 'sin_respuesta') {
+        bentoStyles = {
+          bg: "bg-slate-100 text-slate-700 border border-slate-200 shadow-sm",
+          iconBg: "bg-slate-200 text-slate-600",
+          tagBg: "bg-slate-200 text-slate-600 border-slate-300",
+          priceColor: "text-slate-700 font-bold",
+          descColor: "text-slate-500",
+          btnBg: "bg-slate-200 hover:bg-slate-300 text-slate-700 border-slate-300"
+        };
+      }
+
+      card.className = `${bentoStyles.bg} rounded-[24px] p-3.5 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing relative group`;
+      card.draggable = true;
+      card.ondragstart = (e) => drag(e, lead.id);
+
+      const cleanPhone = String(lead.phone || '').replace(/[^0-9]/g, '');
+      const waUrl = `https://wa.me/${cleanPhone}`;
+      const category = lead.category || 'General';
+
+      let catIcon = "fa-tag";
+      if (category === 'Salud') catIcon = "fa-user-doctor";
+      if (category === 'Gastronomía' || category === 'Comidas') catIcon = "fa-utensils";
+      if (category === 'Entretenimiento') catIcon = "fa-masks-theater";
+      if (category === 'Comercio') catIcon = "fa-bag-shopping";
+      if (category === 'Servicios') catIcon = "fa-briefcase";
+
+      const rawInsta = (lead.instagram || '').trim();
+      const cleanInsta = rawInsta.startsWith('@') ? rawInsta : (rawInsta ? `@${rawInsta}` : '');
+      const instaUrl = cleanInsta ? `https://instagram.com/${cleanInsta.replace('@', '')}` : '';
+
+      const followStep = lead.followStep || '1';
+      const noRespReason = lead.noRespReason || 'no_respondio';
+      const reasonLabel = noRespReason === 'sin_interes' ? 'Sin Interés' : 'No Respondió';
+     if (!lead.date) {
+        lead.date = getTodayString();
+      }
+      const leadDateStr = formatDateDisplay(lead.date);
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="w-8 h-8 rounded-xl ${bentoStyles.iconBg} flex items-center justify-center">
+            <i class="fa-solid ${catIcon} text-xs"></i>
+          </div>
+          
+          <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+            <button onclick="editLead('${lead.id}')" class="text-xs p-1 hover:scale-110 transition-transform" title="Editar">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="deleteLead('${lead.id}')" class="text-xs p-1 hover:scale-110 transition-transform" title="Eliminar">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <div class="flex items-center gap-1.5 flex-wrap mb-1">
+            <span class="inline-block text-[9px] font-bold uppercase tracking-wider ${bentoStyles.tagBg} border px-2 py-0.5 rounded-full">
+              ${escapeHtml(category)}
+            </span>
+            ${lead.stage === 'seguimiento' ? `
+              <button onclick="toggleFollowStep('${lead.id}')" class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${bentoStyles.tagBg} border cursor-pointer hover:scale-105 transition-transform" title="Clic para cambiar entre Seguimiento 1 y 2">
+                Seguimiento ${followStep}
+              </button>
+            ` : ''}
+            ${lead.stage === 'sin_respuesta' ? `
+              <button onclick="toggleNoRespReason('${lead.id}')" class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${bentoStyles.tagBg} border cursor-pointer hover:scale-105 transition-transform" title="Clic para cambiar entre No respondió y Sin interés">
+                ${reasonLabel}
+              </button>
+            ` : ''}
+            <span class="inline-block text-[9px] font-bold ${bentoStyles.tagBg} border px-2 py-0.5 rounded-full ml-auto" title="Fecha de actualización o registro">
+              <i class="fa-regular fa-calendar text-[8px] mr-1"></i>${leadDateStr}
+            </span>
+          </div>
+          
+          <h4 class="font-extrabold text-sm leading-tight tracking-tight">${escapeHtml(lead.name)}</h4>
+          
+          ${cleanInsta ? `
+            <a href="${instaUrl}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] font-bold mt-1.5 px-2 py-0.5 rounded-lg ${bentoStyles.tagBg} border hover:opacity-90 transition-opacity">
+              <i class="fa-brands fa-instagram text-xs"></i> ${escapeHtml(cleanInsta)}
+            </a>
+          ` : ''}
+        </div>
+        
+        ${lead.notes ? `<p class="text-[11px] ${bentoStyles.descColor} font-medium mb-2.5 line-clamp-2 leading-relaxed">${escapeHtml(lead.notes)}</p>` : ''}
+        
+        <div class="flex items-center justify-between pt-2.5 border-t border-black/10 text-xs">
+          <span class="${bentoStyles.priceColor} text-xs">$${Number(lead.value || 0).toLocaleString()}</span>
+          
+          <div class="flex items-center gap-1">
+            <a href="${waUrl}" target="_blank" onclick="autoMoveToContacted('${lead.id}')" class="inline-flex items-center gap-1 ${bentoStyles.btnBg} border px-2 py-1 rounded-xl font-bold transition-all text-[10px]">
+              <i class="fa-brands fa-whatsapp text-xs"></i> Chat
+            </a>
+            
+            <select onchange="moveLead('${lead.id}', this.value)" class="bg-black/10 text-current border-0 rounded-xl px-1 py-1 text-[9px] font-bold focus:outline-none cursor-pointer">
+              <option value="sin_contactar" class="text-slate-800" ${lead.stage === 'sin_contactar' ? 'selected' : ''}>Por Contactar</option>
+              <option value="nuevo" class="text-slate-800" ${lead.stage === 'nuevo' ? 'selected' : ''}>Contacto</option>
+              <option value="seguimiento" class="text-slate-800" ${lead.stage === 'seguimiento' ? 'selected' : ''}>Seguimiento</option>
+              <option value="propuesta" class="text-slate-800" ${lead.stage === 'propuesta' ? 'selected' : ''}>Demo</option>
+              <option value="negociacion" class="text-slate-800" ${lead.stage === 'negociacion' ? 'selected' : ''}>Negociación</option>
+              <option value="ganado" class="text-slate-800" ${lead.stage === 'ganado' ? 'selected' : ''}>Ganado</option>
+              <option value="sin_respuesta" class="text-slate-800" ${lead.stage === 'sin_respuesta' ? 'selected' : ''}>Sin Resp.</option>
+            </select>
+          </div>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function toggleFollowStep(id) {
+      const lead = leads.find(l => l.id === id);
+      if (lead) {
+        lead.followStep = lead.followStep === '2' ? '1' : '2';
+        lead.date = getTodayString();
+        saveData();
+      }
+    }
+
+    function toggleNoRespReason(id) {
+      const lead = leads.find(l => l.id === id);
+      if (lead) {
+        lead.noRespReason = lead.noRespReason === 'sin_interes' ? 'no_respondio' : 'sin_interes';
+        lead.date = getTodayString();
+        saveData();
+      }
+    }
+
+    function moveLead(id, newStage) {
+      const lead = leads.find(l => l.id === id);
+      if (lead) {
+        lead.stage = newStage;
+        lead.date = getTodayString();
+        saveData();
+      }
+    }
+
+    function autoMoveToContacted(id) {
+      const lead = leads.find(l => l.id === id);
+      if (lead && lead.stage === 'sin_contactar') {
+        lead.stage = 'nuevo';
+        lead.date = getTodayString();
+        saveData();
+      }
+    }
+
+    function allowDrop(ev) {
+      ev.preventDefault();
+    }
+
+    function drag(ev, id) {
+      ev.dataTransfer.setData("text/plain", id);
+    }
+
+    function drop(ev, stage) {
+      ev.preventDefault();
+      const id = ev.dataTransfer.getData("text/plain");
+      const lead = leads.find(l => l.id === id);
+      if (lead) {
+        lead.stage = stage;
+        lead.date = getTodayString();
+        saveData();
+      }
+    }
+
+    function openModal(editId = null) {
+      const modal = document.getElementById('leadModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const form = document.getElementById('leadForm');
+
+      form.reset();
+      document.getElementById('leadId').value = '';
+      document.getElementById('leadDate').value = getTodayString();
+
+      if (editId) {
+        const lead = leads.find(l => l.id === editId);
+        if (lead) {
+          modalTitle.innerText = 'Editar Prospecto';
+          document.getElementById('leadId').value = lead.id;
+          document.getElementById('leadName').value = lead.name || '';
+          document.getElementById('leadPhone').value = lead.phone || '';
+          document.getElementById('leadInstagram').value = lead.instagram || '';
+          document.getElementById('leadCategory').value = lead.category || 'Gastronomía';
+          document.getElementById('leadValue').value = lead.value || '';
+          document.getElementById('leadStage').value = lead.stage || 'sin_contactar';
+          document.getElementById('leadFollowStep').value = lead.followStep || '1';
+          document.getElementById('leadNoRespReason').value = lead.noRespReason || 'no_respondio';
+          document.getElementById('leadDate').value = lead.date || getTodayString();
+          document.getElementById('leadNotes').value = lead.notes || '';
+        }
+      } else {
+        modalTitle.innerText = 'Agregar Nuevo Prospecto';
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('leadModal').classList.add('hidden');
+    }
+
+    function saveLead(event) {
+      event.preventDefault();
+
+      const id = document.getElementById('leadId').value;
+      const name = document.getElementById('leadName').value.trim();
+      const phone = document.getElementById('leadPhone').value.trim();
+      const instagram = document.getElementById('leadInstagram').value.trim();
+      const category = document.getElementById('leadCategory').value;
+      const value = document.getElementById('leadValue').value;
+      const stage = document.getElementById('leadStage').value;
+      const followStep = document.getElementById('leadFollowStep').value;
+      const noRespReason = document.getElementById('leadNoRespReason').value;
+      const date = document.getElementById('leadDate').value || getTodayString();
+      const notes = document.getElementById('leadNotes').value.trim();
+
+      if (id) {
+        const index = leads.findIndex(l => l.id === id);
+        if (index !== -1) {
+          leads[index] = {
+            ...leads[index],
+            name,
+            phone,
+            instagram,
+            category,
+            value: value ? Number(value) : 0,
+            stage,
+            followStep,
+            noRespReason,
+            date,
+            notes
+          };
+        }
+      } else {
+        const newLead = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+          name,
+          phone,
+          instagram,
+          category,
+          value: value ? Number(value) : 0,
+          stage,
+          followStep,
+          noRespReason,
+          date,
+          notes
+        };
+        leads.push(newLead);
+      }
+
+      saveData();
+      closeModal();
+    }
+
+    function editLead(id) {
+      openModal(id);
+    }
+
+    function deleteLead(id) {
+      if (confirm('¿Estás segura de eliminar este prospecto?')) {
+        leads = leads.filter(l => l.id !== id);
+        saveData();
+      }
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          let countAdded = 0;
+          
+          results.data.forEach(row => {
+            const name = row.Nombre || row.nombre || row.Empresa || row.empresa || row.Cliente || row.cliente;
+            const phone = row.WhatsApp || row.whatsapp || row.Telefono || row.telefono || row.Celular || row.celular || row.Phone;
+            const instagram = row.Instagram || row.instagram || row.Insta || row.insta || row.Redes || row.redes || '';
+            const value = row.Valor || row.valor || row.Monto || row.monto || 0;
+            const category = row.Categoria || row.categoria || row.Nicho || row.nicho || 'Gastronomía';
+            const notes = row.Observaciones || row.observaciones || row.Notas || row.notas || row.Detalles || row.detalles || '';
+
+            if (name && phone) {
+              leads.push({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                name,
+                phone,
+                instagram,
+                category,
+                value: Number(value) || 0,
+                stage: 'sin_contactar',
+                followStep: '1',
+                noRespReason: 'no_respondio',
+                date: getTodayString(),
+                notes
+              });
+              countAdded++;
+            }
+          });
+
+          if (countAdded > 0) {
+            saveData();
+            alert(`¡Se importaron ${countAdded} prospectos con éxito!`);
+          } else {
+            alert('No se encontraron filas válidas con Nombre y Teléfono en el archivo CSV.');
+          }
+          event.target.value = '';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
