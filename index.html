@@ -84,12 +84,37 @@
           <i class="fa-solid fa-file-csv text-emerald-500 text-sm"></i> Importar Excel
         </button>
 
+        <input type="file" id="backupFileInput" accept=".json,application/json" class="hidden" onchange="restoreBackup(event)">
+
+        <button onclick="document.getElementById('backupFileInput').click()" class="bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all duration-200 flex items-center gap-2 active:scale-95" title="Cargar un archivo de respaldo (.json)">
+          <i class="fa-solid fa-clock-rotate-left text-sky-500 text-sm"></i> Restaurar
+        </button>
+
+        <button onclick="exportBackup()" class="bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all duration-200 flex items-center gap-2 active:scale-95" title="Descargar todos tus prospectos con sus etapas">
+          <i class="fa-solid fa-download text-fuchsia-500 text-sm"></i> Respaldo
+        </button>
+
         <button onclick="openModal()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2.5 rounded-2xl text-xs transition-all duration-200 flex items-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95">
           <i class="fa-solid fa-plus text-xs"></i> Nuevo Lead
         </button>
       </div>
     </div>
   </header>
+
+  <!-- Backup Reminder Banner -->
+  <div id="backupBanner" class="hidden px-4 pt-4 max-w-[1600px] mx-auto w-full">
+    <div class="bg-amber-50 border border-amber-200 rounded-3xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+        </div>
+        <p id="backupBannerText" class="text-xs font-semibold text-amber-800"></p>
+      </div>
+      <button onclick="exportBackup()" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-2xl text-xs transition-all duration-200 flex items-center justify-center gap-2 active:scale-95 shrink-0">
+        <i class="fa-solid fa-download text-xs"></i> Descargar respaldo ahora
+      </button>
+    </div>
+  </div>
 
   <!-- Metrics Dashboard Bar -->
   <section class="py-4 px-4 max-w-[1600px] mx-auto w-full">
@@ -327,6 +352,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       renderBoard();
+      updateBackupBanner();
     });
 
     function getTodayString() {
@@ -359,6 +385,103 @@
     function saveData() {
       localStorage.setItem('crm_leads_data', JSON.stringify(leads));
       renderBoard();
+      updateBackupBanner();
+    }
+
+    // ===== Respaldo y restauración =====
+    const BACKUP_KEY = 'crm_last_backup';
+    const BACKUP_REMINDER_DAYS = 3;
+
+    function exportBackup() {
+      if (leads.length === 0) {
+        alert('No hay prospectos para respaldar todavía.');
+        return;
+      }
+      const backup = {
+        app: 'micrm',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        total: leads.length,
+        leads: leads
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `respaldo-crm-${getTodayString()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+      updateBackupBanner();
+    }
+
+    function restoreBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const restored = Array.isArray(parsed) ? parsed : parsed.leads;
+
+          if (!Array.isArray(restored) || !restored.every(l => l && l.id && l.name)) {
+            alert('Este archivo no parece un respaldo válido del CRM.');
+            return;
+          }
+
+          const fecha = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString() : 'fecha desconocida';
+          const mensaje = leads.length > 0
+            ? `Vas a restaurar ${restored.length} prospectos (respaldo del ${fecha}).\n\nEsto REEMPLAZA los ${leads.length} prospectos que tienes ahora. ¿Continuar?`
+            : `Vas a restaurar ${restored.length} prospectos (respaldo del ${fecha}). ¿Continuar?`;
+
+          if (!confirm(mensaje)) return;
+
+          // Copia de seguridad de lo actual, por si te arrepientes
+          if (leads.length > 0) {
+            localStorage.setItem('crm_leads_before_restore', JSON.stringify(leads));
+          }
+
+          leads = restored;
+          localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+          saveData();
+          alert(`¡Listo! Se restauraron ${restored.length} prospectos con sus etapas.`);
+        } catch (err) {
+          alert('No se pudo leer el archivo. Asegúrate de elegir un respaldo .json del CRM.');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function updateBackupBanner() {
+      const banner = document.getElementById('backupBanner');
+      const text = document.getElementById('backupBannerText');
+      if (!banner || !text) return;
+
+      if (leads.length === 0) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const last = localStorage.getItem(BACKUP_KEY);
+      if (!last) {
+        text.textContent = `Tienes ${leads.length} prospectos y nunca has descargado un respaldo. Si se borra el caché del navegador, se pierden.`;
+        banner.classList.remove('hidden');
+        return;
+      }
+
+      const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+      if (days >= BACKUP_REMINDER_DAYS) {
+        text.textContent = `Tu último respaldo fue hace ${days} días. Descarga uno nuevo para no perder tus avances.`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
     }
 
     function renderBoard() {
@@ -752,7 +875,7 @@
 
     function deleteLead(id) {
       if (confirm('¿Estás segura de eliminar este prospecto?')) {
-        leads = leads.filter(l => l.id === id);
+        leads = leads.filter(l => l.id !== id);
         saveData();
       }
     }
